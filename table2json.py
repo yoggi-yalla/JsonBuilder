@@ -1,14 +1,14 @@
 import pandas as pd
-import io
 import argparse
 import os
-import zipfile
+from zipfile import ZipFile
+from io import BytesIO
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-file')
 parser.add_argument('-sep', nargs='?')
-parser.add_argument('-enc', nargs='?')
-parser.add_argument('-pwd', nargs='?')
+#parser.add_argument('-enc', nargs='?')
+#parser.add_argument('-pwd', nargs='?')
 parser.parse_args()
 args = parser.parse_args()
 
@@ -20,83 +20,67 @@ SUPPORTED_EXCEL_FORMATS = {'.xlsx', '.xls'}
 
 LIST_SEPARATORS = {',',';','\t'}
 
+
 def main():
     dataFrames = {}
 
     # Handling of .zip files
     if FILE_EXT in SUPPORTED_COMPRESSED_FORMATS:
-        archive = zipfile.ZipFile(args.file, 'r')
-
+        archive = ZipFile(args.file, 'r')
         for subFile in archive.namelist():
-            subFileExt = os.path.splitext(subFile)[1]
-            subFileAUX = archive.read(subFile)
-            io_subFile = io.BytesIO(subFileAUX)
+            extension = os.path.splitext(subFile)[1]
 
-            if subFileExt in SUPPORTED_TEXT_FORMATS:
-                assumedSeparator = ','
-                maxCount = 0      
-                helpString = subFileAUX.decode('utf-8')[:2000]
-
-                for separator in LIST_SEPARATORS:
-                    count = helpString.count(separator)
-                    if count > maxCount:
-                        assumedSeparator = separator
-                        maxCount = count
-
-                df =  pd.read_csv(io_subFile, sep=assumedSeparator)
-                dataFrames[args.file +'.' + subFile] = df
-            
-            if subFileExt in SUPPORTED_EXCEL_FORMATS:
-                xls = pd.ExcelFile(io_subFile)
-                for sheet in xls.sheet_names:
-                    df = pd.read_excel(io_subFile, sheet_name=sheet)
-                    dataFrames[args.file + '.' + subFile + '.' + sheet] = df
-                
-
+            if extension in SUPPORTED_TEXT_FORMATS:
+                dataFrames[subFile] = text_to_df(subFile)
+            if extension in SUPPORTED_EXCEL_FORMATS: 
+                dataFrames.update(excel_to_df(subFile))              
 
 
     # Handling of text-based files
     if FILE_EXT in SUPPORTED_TEXT_FORMATS:
-        with open(args.file, encoding = args.enc) as f:
-            fileSeparator = args.sep
-            if not args.sep:
-                fileSeparator = assume_separator(f)
-
-            dataFrames[args.file] = pd.read_csv(args.file, sep=fileSeparator)
+        dataFrames[args.file] = text_to_df(args.file)
 
 
-
-    # Handling of binary data (excel)
+    # Handling of excel-based files
     if FILE_EXT in SUPPORTED_EXCEL_FORMATS:
-        with open(args.file, 'rb') as f:
-            xls = pd.ExcelFile(f)
-            for sheet in xls.sheet_names:
-                dataFrames[args.file + '.' + sheet] = pd.read_excel(f, sheet_name=sheet)
+        dataFrames.update(excel_to_df(args.file))
 
 
-    for df_name, df in dataFrames.items():
+    for name, df in dataFrames.items():
         print('\n')
-        print(df_name)
+        print(name)
         print(df)
+        
+   
+def text_to_df(table):
+    separator = args.sep
+    if not args.sep:
+        separator = assume_separator(table)
+    df = pd.read_csv(table, sep=separator)
+    return df
+
+def excel_to_df(table):
+    tempFrames = {}
+    with open(table, 'rb') as f:
+        xls = pd.ExcelFile(f)
+        for sheet in xls.sheet_names:
+            tempFrames[table + '.' + sheet] = pd.read_excel(f, sheet_name=sheet)
+        return tempFrames
     
-
-    
-
-            
-def assume_separator(openTableFile):
-
-    dataString = openTableFile.read().replace('\n','')[:2000]
+         
+def assume_separator(tableFile):
+    with open(tableFile) as f:
+        tableString = f.read().replace('\n','')[:2000]
     maxSeparatorOccurrences = 0
     assumedSeparator = ','
 
     for separator in LIST_SEPARATORS:
-        count = dataString.count(separator)
+        count = tableString.count(separator)
         if count > maxSeparatorOccurrences:
             maxSeparatorOccurrences = count
             assumedSeparator = separator
 
     return assumedSeparator
-
 
 
 if __name__ == "__main__":
