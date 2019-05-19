@@ -50,6 +50,8 @@ def main():
         print('\n')
         print(name)
         print(df)
+    
+    return dataFrames
         
    
 def text_to_df(table):
@@ -66,7 +68,6 @@ def excel_to_df(table):
         for sheet in xls.sheet_names:
             tempFrames[table + '.' + sheet] = pd.read_excel(f, sheet_name=sheet)
         return tempFrames
-    
          
 def assume_separator(tableFile):
     with open(tableFile) as f:
