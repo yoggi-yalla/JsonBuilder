@@ -1,5 +1,6 @@
 import pandas as pd
 import argparse
+import table2dfs
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-df')
@@ -9,6 +10,9 @@ args = parser.parse_args()
 
 
 def main():
+    dataFrames = table2dfs('test.csv')
+    for df in dataFrames:
+        pass
     outputJson = initializeOutput()
     print(outputJson)
 
