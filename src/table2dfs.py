@@ -21,18 +21,16 @@ SUPPORTED_EXCEL_FORMATS = {'.xlsx', '.xls'}
 LIST_SEPARATORS = {',',';','\t'}
 
 '''
-to test this program, please write:
+to test this program, please enter:
 python table2dfs.py -file ..\test\test.xls
-
 in the commandline from this working dir.
-
 '''
 
 
 def main():
     dataFrames = {}
 
-    # Handling of .zip files @@@@ Not working properly, need to open the zip properly to access them
+    # Handling of .zip files @@@@ Not working currently, need to open the zip properly to access them
     if FILE_EXT in SUPPORTED_COMPRESSED_FORMATS:
         archive = ZipFile(args.file, 'r')
         print(archive.namelist())

@@ -44,6 +44,7 @@ func is used to apply a function to a type after it has been created
 
 output = {}
 
+# mapping and data frame will be the user input 
 mapping = {
     "type": "object",
     "shape": [
@@ -247,43 +248,6 @@ def process_item(df, item, level):
         level -= 1
         return output[level+1]
 
-'''
-    target_json: 
-    {
-        "market_data": [
-            {
-                "action": "ADD_IR",
-                "name": "EUR_OIS",
-                "type": "base_curve"
-                "points" [
-                    {
-                        "date": "2019-05-18",
-                        "df": 0.99
-                    },
-                    {
-                        "date": "2020-05-18",
-                        "df": 0.95
-                    }
-                ]
-            },
-            {
-                "action": "ADD_IR",
-                "name": "USD_OIS",
-                "type": "base_curve"
-                "points" [
-                    {
-                        "date": "2019-05-18",
-                        "df": 0.99
-                    },
-                    {
-                        "date": "2020-05-18",
-                        "df": 0.95
-                    }
-                ]
-            }
-        ]
-    }
-'''
 
 if __name__ == "__main__":
     main()
