@@ -1,0 +1,19 @@
+# dynamically change the scope
+print('Where EUR_OIS and date:')
+scope = scope.loc[scope['name'] == 'EUR_OIS']
+scope = scope.loc[scope['date'] != '']
+print(scope)
+print('')
+scope = df
+
+# mix and match with & and | to combine conditions, parentheses needed
+scope = scope.loc[ (scope['name'] == 'EUR_OIS') & (scope['date'] != '') ]
+print(scope)
+print('')
+scope = df
+    
+    
+    
+# need better support for the following:
+# dates and periods
+# transforming data

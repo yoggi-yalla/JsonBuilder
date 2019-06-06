@@ -1,1 +1,0 @@
-[{"action": "add_ir", "currency": "usd", "curves": [{"identifier": "usd_ois", "type": "base_curve", "curve_points": [{"date": "2019-05-18", "discount_factor": 0.99}, {"date": "2020-05-18", "discount_factor": 0.95}]}]}]
