@@ -47,158 +47,117 @@ func is used to apply a function to a type after it has been created
 output = {}
 
 # mapping and data frame will be the user input 
-mapping = {
-    "type": "object",
-    "shape": [
-        {
-         
-            "type": "array",
-            "name": "market_data",
-                "shape": [
-                    {
-                        "type": "object",
-                        "shape": [
-                            {
-                                    "type": "simple",
-                                    "name": "action",
-                                    "value": "ADD_IR"
+mapping = {  
+    "type":"object",
+    "shape":[  
+        {  
+            "type":"array",
+            "name":"market_data",
+            "shape":[  
+                {  
+                    "type":"object",
+                    "shape":[  
+                        {  
+                            "type":"simple",
+                            "name":"action",
+                            "value":"ADD_IR"
+                        },
+                        {  
+                            "type":"simple",
+                            "name":"name",
+                            "value":"EUR_OIS"
+                        },
+                        {  
+                            "type":"array",
+                            "name":"points",
+                            "shape":[  
+                                {  
+                                    "type":"object",
+                                    "shape":[  
+                                        {  
+                                            "type":"simple",
+                                            "name":"date",
+                                            "value":"2019-05-18"
+                                        },
+                                        {  
+                                            "type":"simple",
+                                            "name":"df",
+                                            "value":"0.99"
+                                        }
+                                    ]
                                 },
-                            {
-                                "type": "key",
-                                "name": "name",
-                                "shape": {
-                                    "type": "simple",
-                                    "value": "EUR_OIS"
-                                }
-                            },
-                            {
-                                "type": "key",
-                                "name": "points",
-                                "shape": {
-                                    "type": "array",
-                                    "shape": [
-                                        {
-                                            "type": "object",
-                                            "shape": [
-                                                {
-                                                    "type": "key",
-                                                    "name": "date",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "2019-05-18"
-                                                    }
-                                                },
-                                                {
-                                                    "type": "key",
-                                                    "name": "df",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "0.99"
-                                                    }
-                                                }
-                                            ]
+                                {  
+                                    "type":"object",
+                                    "shape":[  
+                                        {  
+                                            "type":"simple",
+                                            "name":"date",
+                                            "value":"2020-05-18"
                                         },
-                                        {
-                                            "type": "object",
-                                            "shape": [
-                                                {
-                                                    "type": "key",
-                                                    "name": "date",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "2020-05-18"
-                                                    }
-                                                },
-                                                {
-                                                    "type": "key",
-                                                    "name": "df",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "0.95"
-                                                    }
-                                                }
-                                            ]
-                                        }   
+                                        {  
+                                            "type":"simple",
+                                            "name":"df",
+                                            "value":"0.95"
+                                        }
                                     ]
                                 }
-                            }
-                        ]
-                    },
-                    {
-                        "type": "object",
-                        "shape": [
-                            {
-                                "type": "key",
-                                "name": "action",
-                                "shape": {
-                                    "type": "simple",
-                                    "value": "ADD_IR"
-                                }
-                            },
-                            {
-                                "type": "key",
-                                "name": "name",
-                                "shape": {
-                                    "type": "simple",
-                                    "value": "EUR_OIS"
-                                }
-                            },
-                            {
-                                "type": "key",
-                                "name": "points",
-                                "shape": {
-                                    "type": "array",
-                                    "shape": [
-                                        {
-                                            "type": "object",
-                                            "shape": [
-                                                {
-                                                    "type": "key",
-                                                    "name": "date",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "2019-05-18"
-                                                    }
-                                                },
-                                                {
-                                                    "type": "key",
-                                                    "name": "df",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "0.99"
-                                                    }
-                                                }
-                                            ]
+                            ]
+                        }
+                    ]
+                },
+                {  
+                    "type":"object",
+                    "shape":[  
+                        {  
+                            "type":"simple",
+                            "name":"action",
+                            "value":"ADD_IR"
+                        },
+                        {  
+                            "type":"simple",
+                            "name":"name",
+                            "value":"EUR_OIS"
+                        },
+                        {  
+                            "type":"array",
+                            "name":"points",
+                            "shape":[  
+                                {  
+                                    "type":"object",
+                                    "shape":[  
+                                        {  
+                                            "type":"simple",
+                                            "name":"date",
+                                            "value":"2019-05-18"
                                         },
-                                        {
-                                            "type": "object",
-                                            "shape": [
-                                                {
-                                                    "type": "key",
-                                                    "name": "date",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "2020-05-18"
-                                                    }
-                                                },
-                                                {
-                                                    "type": "key",
-                                                    "name": "df",
-                                                    "shape": {
-                                                        "type": "simple",
-                                                        "value": "0.95"
-                                                    }
-                                                }
-                                            ]
-                                        }   
+                                        {  
+                                            "type":"simple",
+                                            "name":"df",
+                                            "value":"0.99"
+                                        }
+                                    ]
+                                },
+                                {  
+                                    "type":"object",
+                                    "shape":[  
+                                        {  
+                                            "type":"simple",
+                                            "name":"date",
+                                            "value":"2020-05-18"
+                                        },
+                                        {  
+                                            "type":"simple",
+                                            "name":"df",
+                                            "value":"0.95"
+                                        }
                                     ]
                                 }
-                            }
-                        ]
-                    }
-                ]
-            }
-        
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
     ]
 }
 
