@@ -12,6 +12,7 @@ args = parser.parse_args()
 
 
 '''
+item
 type
 shape
 name
@@ -21,13 +22,15 @@ filter
 group
 func
 
+an item is the highest form of abstraction, each item has a type
+
 a type can be an object, array, key, or simple
 an array can hold arrays, objects, or simples
 an object can hold keys
 a key can hold one object, array, or simple
 a simple is the lowest form of data and can't hold another type
 
-shape contains all the details of a type
+shape contains all the items that are held by an item
 
 name is the name of a type within an object, i.e. the name of a key
 
