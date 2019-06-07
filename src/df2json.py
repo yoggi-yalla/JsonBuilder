@@ -24,7 +24,7 @@ func
 
 an item is the highest form of abstraction, each item has a type
 
-a type can be an object, array, or simple
+type can be object, array, or simple
 an object can hold name:item pairs
 an array can hold items
 a simple is the lowest form of data and can't hold another item
@@ -39,9 +39,9 @@ display might get used in a GUI later on to understand what is what
 
 filter is used to set the scope of the df
 
-group is used to split the scope into groups and build one type for each group
+group is used to split the scope into groups and build one item for each group
 
-func is used to apply a function to a type after it has been created
+func is used to apply a function to an item after it has been created
 '''
 
 output = {}
