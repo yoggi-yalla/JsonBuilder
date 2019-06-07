@@ -24,15 +24,14 @@ func
 
 an item is the highest form of abstraction, each item has a type
 
-a type can be an object, array, key, or simple
-an array can hold arrays, objects, or simples
-an object can hold keys
-a key can hold one object, array, or simple
-a simple is the lowest form of data and can't hold another type
+a type can be an object, array, or simple
+an object can hold name:item pairs
+an array can hold items
+a simple is the lowest form of data and can't hold another item
 
 shape contains all the items that are held by an item
 
-name is the name of a type within an object, i.e. the name of a key
+name is the name of an item within an object
 
 value is the value (string, float, int, bool, or none) of a simple
 
@@ -52,22 +51,18 @@ mapping = {
     "type": "object",
     "shape": [
         {
-            "type": "key",
+         
+            "type": "array",
             "name": "market_data",
-            "shape": {
-                "type": "array",
                 "shape": [
                     {
                         "type": "object",
                         "shape": [
                             {
-                                "type": "key",
-                                "name": "action",
-                                "shape": {
                                     "type": "simple",
+                                    "name": "action",
                                     "value": "ADD_IR"
-                                }
-                            },
+                                },
                             {
                                 "type": "key",
                                 "name": "name",
@@ -203,7 +198,7 @@ mapping = {
                     }
                 ]
             }
-        }
+        
     ]
 }
 
@@ -231,9 +226,6 @@ def process_item(df, item, level):
     
     if item["type"] == "simple":
         return item["value"]
-    
-    elif item["type"] == "key":
-        return process_item(df, item["shape"], level)
 
     elif item["type"] == "object":
         level += 1
