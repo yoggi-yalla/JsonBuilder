@@ -29,15 +29,15 @@ an object can hold name:item pairs
 an array can hold items
 a simple is the lowest form of data and can't hold another item
 
-shape contains all the items that are held by an item
+shape contains all the items that are held by the parent item
 
 name is the name of an item within an object
 
 value is the value (string, float, int, bool, or none) of a simple
 
-display might get used in a GUI later on to understand what is what
+display might get used in a GUI later on to help navigate/build the mapping
 
-filter is used to set the scope of the df
+filter is used to set the scope of the dataframe
 
 group is used to split the scope into groups and build one item for each group
 
