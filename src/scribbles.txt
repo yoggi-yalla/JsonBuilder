@@ -17,3 +17,6 @@ scope = df
 # need better support for the following:
 # dates and periods
 # transforming data
+
+
+# json2mapping would be nice! 
