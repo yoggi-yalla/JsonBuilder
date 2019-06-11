@@ -26,8 +26,8 @@ func        = optional
 an item is the highest form of abstraction, each item has a type
 
 type can be array, object, or simple
-an object can hold items with a name
-an array can hold items without name
+an object can hold items with names
+an array can hold items without names
 a simple can't hold another item
 
 shape contains all the items that are held by the parent item
@@ -176,7 +176,12 @@ def main():
     output = process_item(df, mapping, level)
     print(json.dumps(output, indent=4))
 
-def process_item(scope, item, level):
+    for scope in df.groupby('name'):
+        print(scope[1].iloc[0])
+        for row in scope[1].itertuples():
+            print(row)
+
+def process_item(df, item, level):
 
     if item["type"] == "simple":
         return item["value"]
