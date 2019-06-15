@@ -101,17 +101,14 @@ mapping = {
 }
 
 temp_items = {}
-temp_types = {}
 temp_iterators = {}
 level = 0
 
 if mapping["type"] == "array":
     temp_items[0] = []
-    temp_types[0] = "array"
 else:
     temp_items[0] = {}
     temp_items[0]["root"] = {}
-    temp_types[0] = "object"
 
 
 def main():
@@ -125,7 +122,7 @@ def main():
 
     process_items(df, mapping, level)
 
-    if temp_types[0] == "object":
+    if type(temp_items[0]) == dict:
         output = temp_items[0]["root"]
     else:
         if len(temp_items[0]) > 0:
@@ -142,6 +139,7 @@ def process_items(df, item, level):
     if "scope" in item:
         scope = df.loc[eval(item["scope"])]
 
+
     if "group" in item:
         if item["group"] == True:
             temp_iterators[level] = scope.groupby(scope.index != None)
@@ -150,10 +148,10 @@ def process_items(df, item, level):
     else:
         temp_iterators[level] = scope.groupby(scope.index)
 
+
     for group in temp_iterators[level]:
 
         parent = temp_items[level]
-        parent_type = temp_types[level]
 
         if item["type"] == "simple":
             if "column" in item:
@@ -165,7 +163,6 @@ def process_items(df, item, level):
         elif item["type"] == "object":
             level += 1
             temp_items[level] = {}
-            temp_types[level] = "object"
             for sub_item in item["shape"]:
                 process_items(group[1], sub_item, level)
             level -= 1
@@ -175,11 +172,11 @@ def process_items(df, item, level):
         elif item["type"] == "array":
             level += 1
             temp_items[level] = []
-            temp_types[level] = "array"
             for sub_item in item["shape"]:
                 process_items(group[1], sub_item, level)
             level -= 1
             child = temp_items[level+1]
+
 
         if "func" in item:
             f = eval(item["func"])
