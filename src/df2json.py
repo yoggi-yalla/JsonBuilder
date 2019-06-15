@@ -1,9 +1,6 @@
 import pandas as pd
 import argparse
-import os
 import json
-import datetime
-import pprint
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('-df')
@@ -32,32 +29,37 @@ a simple can't hold another item
 
 shape contains all the items that are held by the parent item
 
-value is the value (string, float, int, true, false, or none) of a simple
+value is the value (string, float, int, True, False, or None) of a simple
 
 display will be used in a GUI to help navigate/build the mapping
 
-scope will be used to set the scope of the dataframe
+scope is used to set the scope of the dataframe
 
-group will be used to split the scope into groups and build one item for each group
+group is used to split the scope into groups and build one item for each group
 
-(every row of the current scope is a group by default)
+every row of the current scope is a group by default
 
 func will be used to apply a function to an item after it has been created
 '''
 
-output = {}
-level = 0
-
 # mapping and data frame will be the input 
+# validate that mapping["type"] is in ["object", "array"]
+# validate that mapping["group"] == True
+# validate that mapping["name"] == "root"
+
 mapping = {  
     "type":"object",
+    "name": "root",
+    "group": True,
     "shape":[  
         {  
             "type":"array",
             "name":"market_data",
+            "group": True,
             "shape":[  
                 {  
                     "type":"object",
+                    "group": "name",
                     "shape":[  
                         {  
                             "type":"simple",
@@ -67,90 +69,25 @@ mapping = {
                         {  
                             "type":"simple",
                             "name":"name",
-                            "value":"USD_OIS"
+                            "column":"name"
                         },
                         {  
                             "type":"array",
                             "name":"points",
-                            "shape":[  
+                            "group": True,
+                            "shape":[
                                 {  
                                     "type":"object",
                                     "shape":[  
                                         {  
                                             "type":"simple",
-                                            "name":"date",
-                                            "value":"2019-05-18"
+                                            "column": "date",
+                                            "name":"date"
                                         },
                                         {  
                                             "type":"simple",
-                                            "name":"df",
-                                            "value":"0.99"
-                                        }
-                                    ]
-                                },
-                                {  
-                                    "type":"object",
-                                    "shape":[  
-                                        {  
-                                            "type":"simple",
-                                            "name":"date",
-                                            "value":"2020-05-18"
-                                        },
-                                        {  
-                                            "type":"simple",
-                                            "name":"df",
-                                            "value":"0.95"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {  
-                    "type":"object",
-                    "shape":[  
-                        {  
-                            "type":"simple",
-                            "name":"action",
-                            "value":"ADD_IR"
-                        },
-                        {  
-                            "type":"simple",
-                            "name":"name",
-                            "value":"EUR_OIS"
-                        },
-                        {  
-                            "type":"array",
-                            "name":"points",
-                            "shape":[  
-                                {  
-                                    "type":"object",
-                                    "shape":[  
-                                        {  
-                                            "type":"simple",
-                                            "name":"date",
-                                            "value":"2019-05-18"
-                                        },
-                                        {  
-                                            "type":"simple",
-                                            "name":"df",
-                                            "value":"0.99"
-                                        }
-                                    ]
-                                },
-                                {  
-                                    "type":"object",
-                                    "shape":[  
-                                        {  
-                                            "type":"simple",
-                                            "name":"date",
-                                            "value":"2020-05-18"
-                                        },
-                                        {  
-                                            "type":"simple",
-                                            "name":"df",
-                                            "value":"0.95"
+                                            "column": "discount_factor",
+                                            "name":"df"
                                         }
                                     ]
                                 }
@@ -163,6 +100,19 @@ mapping = {
     ]
 }
 
+temp_items = {}
+temp_types = {}
+temp_iterators = {}
+level = 0
+
+if mapping["type"] == "array":
+    temp_items[0] = []
+    temp_types[0] = "array"
+else:
+    temp_items[0] = {}
+    temp_items[0]["root"] = {}
+    temp_types[0] = "object"
+
 
 def main():
 
@@ -173,35 +123,77 @@ def main():
     print(df)
     print('')
 
-    output = process_item(df, mapping, level)
+    process_items(df, mapping, level)
+
+    if temp_types[0] == "object":
+        output = temp_items[0]["root"]
+    else:
+        if len(temp_items[0]) > 0:
+            output = temp_items[0][0]
+        else:
+            output = temp_items[0]
+
     print(json.dumps(output, indent=4))
 
-    for scope in df.groupby('name'):
-        print(scope[1].iloc[0])
-        for row in scope[1].itertuples():
-            print(row)
 
-def process_item(df, item, level):
+def process_items(df, item, level):
 
-    if item["type"] == "simple":
-        return item["value"]
+    scope = df
+    if "scope" in item:
+        scope = df.loc[eval(item["scope"])]
 
-    elif item["type"] == "object":
-        level += 1
-        output[level] = {}
-        for sub_item in item["shape"]:
-            output[level][sub_item["name"]] = process_item(df, sub_item, level)
-        level -= 1
-        return output[level+1]
+    if "group" in item:
+        if item["group"] == True:
+            temp_iterators[level] = scope.groupby(scope.index != None)
+        else:
+            temp_iterators[level] = scope.groupby(item["group"])
+    else:
+        temp_iterators[level] = scope.groupby(scope.index)
 
-    elif item["type"] == "array":
-        level += 1
-        output[level] = []
-        for sub_item in item["shape"]:
-            output[level].append(process_item(df, sub_item, level))
-        level -= 1
-        return output[level+1]
+    for group in temp_iterators[level]:
 
+        parent = temp_items[level]
+        parent_type = temp_types[level]
+
+        if item["type"] == "simple":
+            if "column" in item:
+                child = group[1].iloc[0][item["column"]]
+            else:
+                child = item["value"]
+
+
+        elif item["type"] == "object":
+            level += 1
+            temp_items[level] = {}
+            temp_types[level] = "object"
+            for sub_item in item["shape"]:
+                process_items(group[1], sub_item, level)
+            level -= 1
+            child = temp_items[level+1]
+
+
+        elif item["type"] == "array":
+            level += 1
+            temp_items[level] = []
+            temp_types[level] = "array"
+            for sub_item in item["shape"]:
+                process_items(group[1], sub_item, level)
+            level -= 1
+            child = temp_items[level+1]
+
+        if "func" in item:
+            f = eval(item["func"])
+            child = f(child, scope.iloc[0])
+
+        attach_item(item, child, parent)    
+
+    scope = df
+
+def attach_item(item, child, parent):
+    if type(parent) == dict:
+        parent[item["name"]] = child
+    else:
+        parent.append(child)
 
 if __name__ == "__main__":
     main()
