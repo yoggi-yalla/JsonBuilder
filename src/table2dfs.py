@@ -7,9 +7,9 @@ from io import BytesIO
 parser = argparse.ArgumentParser()
 parser.add_argument('-file')
 parser.add_argument('-sep', nargs='?')
-# parser.add_argument('-qchar', nargs='?')
-# parser.add_argument('-enc', nargs='?')
-# parser.add_argument('-pwd', nargs='?')
+parser.add_argument('-qchar', nargs='?')
+parser.add_argument('-enc', nargs='?')
+parser.add_argument('-pwd', nargs='?')
 args = parser.parse_args()
 
 FILE_EXT = os.path.splitext(args.file)[1]
@@ -22,7 +22,7 @@ LIST_SEPARATORS = {',',';','\t'}
 
 '''
 to test this program, please enter:
-python table2dfs.py -file ..\test\test.xls
+python table2dfs.py -file ../test/test.zip
 in the commandline from this working dir.
 '''
 
@@ -30,17 +30,21 @@ in the commandline from this working dir.
 def main():
     dataFrames = {}
 
-    # Handling of .zip files @@@@ Not working currently, need to open the zip properly to access them
+    # Handling of .zip files
     if FILE_EXT in SUPPORTED_COMPRESSED_FORMATS:
         archive = ZipFile(args.file, 'r')
-        print(archive.namelist())
         for subFile in archive.namelist():
+            extractedFile = archive.extract(subFile)
             extension = os.path.splitext(subFile)[1]
 
             if extension in SUPPORTED_TEXT_FORMATS:
-                dataFrames[subFile] = text_to_df(subFile)
+                dataFrames[os.path.basename(extractedFile)] = text_to_df(extractedFile)
             if extension in SUPPORTED_EXCEL_FORMATS: 
-                dataFrames.update(excel_to_df(subFile))              
+                dataFrames.update(excel_to_df(extractedFile))
+
+            os.remove(extractedFile)
+            
+       
 
     # Handling of text-based files
     if FILE_EXT in SUPPORTED_TEXT_FORMATS:
@@ -70,7 +74,7 @@ def excel_to_df(table):
     with open(table, 'rb') as f:
         xls = pd.ExcelFile(f)
         for sheet in xls.sheet_names:
-            tempFrames[table + '.' + sheet] = pd.read_excel(f, sheet_name=sheet).astype(str)
+            tempFrames[os.path.basename(table) + '.' + sheet] = pd.read_excel(f, sheet_name=sheet).astype(str)
         return tempFrames
          
 def sniff_for_sep(tableFile, sniffLength=2000):
