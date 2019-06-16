@@ -48,7 +48,7 @@ def main():
     print('\n Full dataframe:')
     print(df)
     print('')
-    print(json.dumps(output, indent=4))
+    print(json.dumps(output, indent=3))
 
 
 def process_items(df, item, level):

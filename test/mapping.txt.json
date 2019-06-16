@@ -1,53 +1,53 @@
 {
-  "type": "object",
-  "name": "root",
-  "group": true,
-  "shape": [
-    {
-      "type": "array",
-      "name": "market_data",
-      "group": true,
-      "shape": [
-        {
-          "type": "object",
-          "group": "name",
-          "shape": [
+   "type": "object",
+   "name": "root",
+   "group": true,
+   "shape": [
+      {
+         "type": "array",
+         "name": "market_data",
+         "group": true,
+         "shape": [
             {
-              "type": "simple",
-              "name": "action",
-              "value": "ADD_IR"
-            },
-            {
-              "type": "simple",
-              "name": "name",
-              "column": "name"
-            },
-            {
-              "type": "array",
-              "name": "points",
-              "group": true,
-              "shape": [
-                {
-                  "type": "object",
-                  "shape": [
-                    {
-                      "type": "simple",
-                      "column": "date",
-                      "name": "date"
-                    },
-                    {
-                      "type": "simple",
-                      "func": "lambda x,r,p: float(x)",
-                      "column": "discount_factor",
-                      "name": "df"
-                    }
-                  ]
-                }
-              ]
+               "type": "object",
+               "group": "name",
+               "shape": [
+                  {
+                     "type": "simple",
+                     "name": "action",
+                     "value": "ADD_IR"
+                  },
+                  {
+                     "type": "simple",
+                     "name": "name",
+                     "column": "name"
+                  },
+                  {
+                     "type": "array",
+                     "name": "points",
+                     "group": true,
+                     "shape": [
+                        {
+                           "type": "object",
+                           "shape": [
+                              {
+                                 "type": "simple",
+                                 "column": "date",
+                                 "name": "date"
+                              },
+                              {
+                                 "type": "simple",
+                                 "func": "lambda x,r,p: float(x)",
+                                 "column": "discount_factor",
+                                 "name": "df"
+                              }
+                           ]
+                        }
+                     ]
+                  }
+               ]
             }
-          ]
-        }
-      ]
-    }
-  ]
+         ]
+      }
+   ]
 }
