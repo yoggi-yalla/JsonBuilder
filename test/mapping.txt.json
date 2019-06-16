@@ -1,5 +1,5 @@
 {
-  "type": "array",
+  "type": "object",
   "name": "root",
   "group": true,
   "shape": [
@@ -37,6 +37,7 @@
                     },
                     {
                       "type": "simple",
+                      "func": "lambda x,r,p: float(x)",
                       "column": "discount_factor",
                       "name": "df"
                     }

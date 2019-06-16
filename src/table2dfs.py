@@ -48,7 +48,7 @@ def main():
 
     # Handling of text-based files
     if FILE_EXT in SUPPORTED_TEXT_FORMATS:
-        dataFrames[args.file] = text_to_df(args.file)
+        dataFrames[os.path.basename(args.file)] = text_to_df(args.file)
 
 
     # Handling of excel-based files

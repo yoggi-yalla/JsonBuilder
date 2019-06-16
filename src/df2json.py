@@ -33,7 +33,6 @@ else:
 
 
 
-
 def main():
 
     process_items(df, mapping, level)
