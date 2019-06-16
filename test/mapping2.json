@@ -1,0 +1,20 @@
+{
+   "type": "object",
+   "name": "root",
+   "group": true,
+   "sub_nodes": [
+      {
+         "type": "object",
+         "name_col": "name",
+         "group": "name",
+         "sub_nodes": [
+            {
+               "type": "leaf",
+               "name_col": "date",
+               "func": "lambda x,r,p: float(x)",
+               "value_col": "discount_factor"
+            }
+         ]
+      }
+   ]
+}

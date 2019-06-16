@@ -3,14 +3,14 @@ import argparse
 import json
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-data', nargs='?')
+parser.add_argument('-df', nargs='?')
 parser.add_argument('-mapping', nargs='?')
 args = parser.parse_args()
 
 
 # setup
-if args.data:
-    df = pd.read_csv(args.data)
+if args.df:
+    df = pd.read_csv(args.df)
 else:
     df = pd.read_csv('../test/test.txt', na_filter=False).astype(str)
 
@@ -18,32 +18,32 @@ if args.mapping:
     with open(args.mapping, 'r') as f:
         mapping = json.load(f)
 else:
-    with open('../test/mapping.txt.json', "r") as f:
+    with open('../test/mapping1.json', "r") as f:
         mapping = json.load(f)
 
-temp_items = {}
+temp_nodes = {}
 temp_iterators = {}
 level = 0
 
 if mapping["type"] == "object":
-    temp_items[0] = {}
-    temp_items[0]["root"] = {}
+    temp_nodes[0] = {}
+    temp_nodes[0]["root"] = {}
 else:
-    temp_items[0] = []
+    temp_nodes[0] = []
 
 
 
 def main():
 
-    process_items(df, mapping, level)
+    traverse_nodes(df, mapping, level)
 
-    if type(temp_items[0]) == dict:
-        output = temp_items[0]["root"]
+    if type(temp_nodes[0]) == dict:
+        output = temp_nodes[0]["root"]
     else:
-        if len(temp_items[0]) > 0:
-            output = temp_items[0][0]
+        if len(temp_nodes[0]) > 0:
+            output = temp_nodes[0][0]
         else:
-            output = temp_items[0]
+            output = temp_nodes[0]
 
     print('\n Full dataframe:')
     print(df)
@@ -51,62 +51,63 @@ def main():
     print(json.dumps(output, indent=3))
 
 
-def process_items(df, item, level):
+def traverse_nodes(df, node, level):
 
-    scope = df
-    if "scope" in item:
-        scope = df.loc[eval(item["scope"])]
+    if "scope" in node:
+        scope = df.loc[eval(node["scope"])]
+    else:
+        scope = df
 
 
-    if "group" in item:
-        if item["group"] == True:
+    if "group" in node:
+        if node["group"] == True:
             temp_iterators[level] = scope.groupby(scope.index != None)
         else:
-            temp_iterators[level] = scope.groupby(item["group"])
+            temp_iterators[level] = scope.groupby(node["group"])
     else:
         temp_iterators[level] = scope.groupby(scope.index)
 
 
     for group in temp_iterators[level]:
 
-        parent = temp_items[level]
+        if "name_col" in node:
+            node["name"] = group[1].iloc[0][node["name_col"]]
 
-        if item["type"] == "simple":
-            if "column" in item:
-                child = group[1].iloc[0][item["column"]]
+        parent = temp_nodes[level]
+
+        if node["type"] == "leaf":
+            if "value_col" in node:
+                child = group[1].iloc[0][node["value_col"]]
             else:
-                child = item["value"]
+                child = node["value"]
 
-
-        elif item["type"] == "object":
+        elif node["type"] == "object":
             level += 1
-            temp_items[level] = {}
-            for sub_item in item["shape"]:
-                process_items(group[1], sub_item, level)
+            temp_nodes[level] = {}
+            for sub_node in node["sub_nodes"]:
+                traverse_nodes(group[1], sub_node, level)
             level -= 1
-            child = temp_items[level+1]
+            child = temp_nodes[level+1]
 
 
-        elif item["type"] == "array":
+        elif node["type"] == "array":
             level += 1
-            temp_items[level] = []
-            for sub_item in item["shape"]:
-                process_items(group[1], sub_item, level)
+            temp_nodes[level] = []
+            for sub_node in node["sub_nodes"]:
+                traverse_nodes(group[1], sub_node, level)
             level -= 1
-            child = temp_items[level+1]
+            child = temp_nodes[level+1]
 
-
-        if "func" in item:
-            f = eval(item["func"])
+        if "func" in node:
+            f = eval(node["func"])
             child = f(child, scope.iloc[0], parent)
 
-        attach_item(item, child, parent)    
+        attach_item(node, child, parent)
+    
 
-    scope = df
-
-def attach_item(item, child, parent):
+def attach_item(node, child, parent):
     if type(parent) == dict:
-        parent[item["name"]] = child
+        parent[node["name"]] = child
     else:
         parent.append(child)
 

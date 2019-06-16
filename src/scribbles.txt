@@ -1,29 +1,41 @@
 '''
-item
-type        = mandatory for all items
-name        = mandatory for items within an object
-shape       = mandatory for objects and arrays
-column      = optional (this or value)
-value       = optional
-display     = optional
-scope       = optional
-group       = optional
-func        = optional
+node
+type
+name
+name_col
+value
+value_col
+sub_nodes
+filter
+group
+func
 
-an item is the highest level of abstraction, each item has a type
-type can be array, object, or simple
-an object can hold items with names
-an array can hold items without names
-a simple can't hold another item
 
-shape contains all the items that are held by the parent item
-column is used to extract a value from the first row of the current scope
-value is the value (string, float, int, True, False, or None) of a simple
-display will be used in a GUI to help navigate/build the mapping
-scope is used to set the scope of the dataframe
-group is used to split the scope into groups and build one item for each group
+node is the highest level of abstraction, each node has a type
+
+type can be object, array, or leaf
+
+an object contains nodes with names
+an array contains nodes without names
+a leaf does not contain further nodes
+
+each node in an object has a name
+use name_col to fetch name from column
+use name to specify name directly
+
+each leaf has a value (string, float, int, true, false, or none)
+use value_col to fetch value from column
+use value to specify value directly
+
+sub_items is an array of all child nodes
+filter is used to set the scope of the dataframe
+group is used to split the scope into groups and build one node for each group
+
 every row of the current scope is a group by default
-func will be used to apply a function to an item after it has been created
+
+func is used to apply a lambda function to a node after it has been created
 '''
 
 # json2mapping would be nice! 
+
+# do i need to support default values?

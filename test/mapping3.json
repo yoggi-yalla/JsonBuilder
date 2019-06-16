@@ -2,43 +2,43 @@
    "type": "object",
    "name": "root",
    "group": true,
-   "shape": [
+   "sub_nodes": [
       {
          "type": "array",
          "name": "market_data",
          "group": true,
-         "shape": [
+         "sub_nodes": [
             {
                "type": "object",
                "group": "name",
-               "shape": [
+               "sub_nodes": [
                   {
-                     "type": "simple",
+                     "type": "leaf",
                      "name": "action",
                      "value": "ADD_IR"
                   },
                   {
-                     "type": "simple",
+                     "type": "leaf",
                      "name": "name",
-                     "column": "name"
+                     "value_col": "name"
                   },
                   {
                      "type": "array",
                      "name": "points",
                      "group": true,
-                     "shape": [
+                     "sub_nodes": [
                         {
                            "type": "object",
-                           "shape": [
+                           "sub_nodes": [
                               {
-                                 "type": "simple",
-                                 "column": "date",
+                                 "type": "leaf",
+                                 "value_col": "date",
                                  "name": "date"
                               },
                               {
-                                 "type": "simple",
+                                 "type": "leaf",
                                  "func": "lambda x,r,p: float(x)",
-                                 "column": "discount_factor",
+                                 "value_col": "discount_factor",
                                  "name": "df"
                               }
                            ]

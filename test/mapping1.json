@@ -1,0 +1,26 @@
+{
+   "type": "array",
+   "group": true,
+   "sub_nodes": [
+      {
+         "type": "object",
+         "sub_nodes": [
+            {
+            	"type": "leaf",
+            	"name": "name",
+            	"value_col": "name"
+            },
+            {
+	        "type": "leaf",
+	        "name": "discount_factor",
+	        "value_col": "discount_factor"
+            },
+            {
+	        "type": "leaf",
+	        "name": "date",
+	        "value_col": "date"
+            }
+         ]
+      }
+   ]
+}
