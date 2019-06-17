@@ -34,6 +34,8 @@ group is used to split the scope into groups and build one node for each group
 every row of the current scope is a group by default
 
 func is used to apply a lambda function to a node after it has been created
+
+(filter and func use 'eval' and should be reworked)
 '''
 
 # json2mapping would be nice! 
