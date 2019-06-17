@@ -15,9 +15,9 @@ node is the highest level of abstraction, each node has a type
 
 type can be object, array, or leaf
 
-an object contains nodes with names
-an array contains nodes without names
-a leaf does not contain further nodes
+an object is parent to nodes with names
+an array is parent to nodes without names
+a leaf can not be parent to further nodes
 
 each node in an object has a name
 use name_col to fetch name from column
@@ -27,10 +27,10 @@ each leaf has a value (string, float, int, true, false, or none)
 use value_col to fetch value from column
 use value to specify value directly
 
-sub_items is an array of all child nodes
+sub_items is a list of all child nodes
+
 filter is used to set the scope of the dataframe
 group is used to split the scope into groups and build one node for each group
-
 every row of the current scope is a group by default
 
 func is used to apply a lambda function to a node after it has been created

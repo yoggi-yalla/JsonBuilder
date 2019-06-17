@@ -35,7 +35,7 @@ else:
 
 def main():
 
-    traverse_nodes(df, mapping, level)
+    traverse_mapping(df, mapping, level)
 
     if type(temp_nodes[0]) == dict:
         output = temp_nodes[0]["root"]
@@ -51,7 +51,7 @@ def main():
     print(json.dumps(output, indent=3))
 
 
-def traverse_nodes(df, node, level):
+def traverse_mapping(df, node, level):
 
     if "scope" in node:
         scope = df.loc[eval(node["scope"])]
@@ -70,10 +70,10 @@ def traverse_nodes(df, node, level):
 
     for group in temp_iterators[level]:
 
+        parent = temp_nodes[level]
+        
         if "name_col" in node:
             node["name"] = group[1].iloc[0][node["name_col"]]
-
-        parent = temp_nodes[level]
 
         if node["type"] == "leaf":
             if "value_col" in node:
@@ -85,7 +85,7 @@ def traverse_nodes(df, node, level):
             level += 1
             temp_nodes[level] = {}
             for sub_node in node["sub_nodes"]:
-                traverse_nodes(group[1], sub_node, level)
+                traverse_mapping(group[1], sub_node, level)
             level -= 1
             child = temp_nodes[level+1]
 
@@ -94,7 +94,7 @@ def traverse_nodes(df, node, level):
             level += 1
             temp_nodes[level] = []
             for sub_node in node["sub_nodes"]:
-                traverse_nodes(group[1], sub_node, level)
+                traverse_mapping(group[1], sub_node, level)
             level -= 1
             child = temp_nodes[level+1]
 
@@ -102,10 +102,10 @@ def traverse_nodes(df, node, level):
             f = eval(node["func"])
             child = f(child, scope.iloc[0], parent)
 
-        attach_item(node, child, parent)
+        attach_node(node, child, parent)
     
 
-def attach_item(node, child, parent):
+def attach_node(node, child, parent):
     if type(parent) == dict:
         parent[node["name"]] = child
     else:
