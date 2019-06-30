@@ -21,12 +21,16 @@ else:
     with open('../test/mapping3.json', "r") as f:
         mapping = json.load(f)
 
+assert mapping["type"] in ["array", "object"]
+assert mapping["group"] == True
+assert "scope" not in mapping
+
 memory = {}
 json_level = 0
 
 
 def main():
-    
+
     traverse(df, mapping)
     output = memory[1]
 
