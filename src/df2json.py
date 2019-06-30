@@ -28,6 +28,7 @@ def main():
 
     output = traverse(df, mapping, memory, level)
 
+    print(df)
     print(json.dumps(output, indent=3))
     print(time.process_time())
 
