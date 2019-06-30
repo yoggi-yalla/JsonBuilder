@@ -1,10 +1,10 @@
 {
    "type": "array",
    "group": true,
-   "sub_nodes": [
+   "children": [
       {
          "type": "object",
-         "sub_nodes": [
+         "children": [
             {
             	"type": "leaf",
             	"name": "name",

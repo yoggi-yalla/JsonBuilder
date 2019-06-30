@@ -5,8 +5,8 @@ name
 name_col
 value
 value_col
-sub_nodes
-filter
+children
+scope
 group
 func
 
@@ -29,11 +29,11 @@ use value to specify value directly
 
 sub_items is a list of all child nodes
 
-filter is used to set the scope of the dataframe
+scope is used to set the scope of the dataframe
 group is used to split the scope into groups and build one node for each group
 every row of the current scope is a group by default
 
-func is used to apply a lambda function to a node after it has been created
+func is used to apply a function to a node after it has been created
 
 (filter and func use 'eval' and should be reworked)
 '''

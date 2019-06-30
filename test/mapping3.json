@@ -1,17 +1,16 @@
 {
    "type": "object",
-   "name": "root",
    "group": true,
-   "sub_nodes": [
+   "children": [
       {
          "type": "array",
          "name": "market_data",
          "group": true,
-         "sub_nodes": [
+         "children": [
             {
                "type": "object",
                "group": "name",
-               "sub_nodes": [
+               "children": [
                   {
                      "type": "leaf",
                      "name": "action",
@@ -26,10 +25,10 @@
                      "type": "array",
                      "name": "points",
                      "group": true,
-                     "sub_nodes": [
+                     "children": [
                         {
                            "type": "object",
-                           "sub_nodes": [
+                           "children": [
                               {
                                  "type": "leaf",
                                  "value_col": "date",

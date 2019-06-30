@@ -1,13 +1,12 @@
 {
    "type": "object",
-   "name": "root",
    "group": true,
-   "sub_nodes": [
+   "children": [
       {
          "type": "object",
          "name_col": "name",
          "group": "name",
-         "sub_nodes": [
+         "children": [
             {
                "type": "leaf",
                "name_col": "date",
