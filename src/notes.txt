@@ -1,0 +1,39 @@
+'''
+A 'mapping' describes the output JSON as a tree of nodes,
+a node can have the following attributes:
+
+type
+name
+name_col
+value
+value_col
+children
+filter
+group
+func
+
+type must be either object, array, or leaf
+
+an object is parent to nodes with a name
+an array is parent to nodes without a name
+a leaf can not be parent to further nodes
+
+children is a list of all child nodes
+
+each child to an object has a name
+use name_col to fetch name from column
+use name to set a hard coded name
+
+each leaf has a value (string, float, int, true, false, or none)
+use value_col to fetch value from column
+use value to set a hard coded value
+
+filter is used to set the scope of the dataframe
+
+group splits the scope into groups and builds one JSON node for each group
+every row of the current scope is a group by default
+
+func is used to apply a function to a JSON node after it has been created
+
+(filter and func use 'eval' and should be reworked)
+'''
