@@ -1,9 +1,9 @@
 {
    "type": "array",
-   "group": true,
    "children": [
       {
          "type": "object",
+         "group": false,
          "children": [
             {
             	"type": "leaf",

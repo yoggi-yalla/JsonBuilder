@@ -31,7 +31,8 @@ use value to set a hard coded value
 filter is used to set the scope of the dataframe
 
 group splits the scope into groups and builds one JSON node for each group
-every row of the current scope is a group by default
+if group is set to false each row of the scope becomes a group
+the full scope is considered one group by default
 
 func is used to apply a function to a JSON node after it has been created
 

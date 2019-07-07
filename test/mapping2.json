@@ -1,6 +1,5 @@
 {
    "type": "object",
-   "group": true,
    "children": [
       {
          "type": "object",
@@ -9,6 +8,7 @@
          "children": [
             {
                "type": "leaf",
+               "group": false,
                "name_col": "date",
                "func": "lambda x,r,p: float(x)",
                "value_col": "discount_factor"
