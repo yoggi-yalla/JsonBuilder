@@ -3,7 +3,7 @@
    "children": [
       {
          "type": "object",
-         "group": "name",
+         "split": "name",
          "children": [
             {
                "type": "leaf",
@@ -22,7 +22,7 @@
                "children": [
                   {
                      "type": "object",
-                     "group": "name",
+                     "split": "name",
                      "children": [
                         {
                            "type": "array",
@@ -30,7 +30,7 @@
                            "children": [
                               {
                                  "type": "object",
-                                 "group": false,
+                                 "split": true,
                                  "children": [
                                     {
                                        "type": "leaf",

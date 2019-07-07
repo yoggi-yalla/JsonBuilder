@@ -3,7 +3,7 @@
    "children": [
       {
          "type": "object",
-         "group": false,
+         "split": true,
          "children": [
             {
             	"type": "leaf",

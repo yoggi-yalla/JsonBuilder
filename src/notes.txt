@@ -9,7 +9,7 @@ value
 value_col
 children
 filter
-group
+split
 func
 
 type must be either object, array, or leaf
@@ -30,8 +30,9 @@ use value to set a hard coded value
 
 filter is used to set the scope of the dataframe
 
-group splits the scope into groups and builds one JSON node for each group
-if group is set to false each row of the scope becomes a group
+split is used to split the scope into groups and builds one JSON node for each group
+if split is set to true each row of the scope becomes a group
+if split is a column name the scope is split by that column
 the full scope is considered one group by default
 
 func is used to apply a function to a JSON node after it has been created

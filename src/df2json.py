@@ -13,7 +13,7 @@ mapping = json.load(open(args.mapping))
 
 assert mapping["type"] in ["object", "array"]
 assert "func" not in mapping
-assert "group" not in mapping
+assert "split" not in mapping
 
 '''
 Run the script in command line from this working dir:
@@ -44,12 +44,12 @@ def traverse(df, node, mem, ref):
     else:
         scope = df
 
-    if "group" in node:
-        if node["group"] == False:
+    if "split" in node:
+        if node["split"] == True:
             for row in scope.itertuples():
                 process_row(row, node, mem, ref)
         else:
-            for group in scope.groupby(node["group"], sort=False):
+            for group in scope.groupby(node["split"], sort=False):
                 process_scope(group[1], node, mem, ref)
     else:
         process_scope(scope, node, mem, ref)
