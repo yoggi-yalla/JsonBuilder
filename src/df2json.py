@@ -13,11 +13,11 @@ mapping = json.load(open(args.mapping))
 
 assert mapping["type"] in ["object", "array"]
 assert "func" not in mapping
-assert "multiple" not in mapping
+assert "group" not in mapping
 
 '''
 Run the script in command line from this working dir:
-python df2json.py -data '../test/test.txt' -mapping '../test/mapping3.json'
+python df2json.py -data ../test/test.txt -mapping ../test/mapping3.json
 '''
 
 
@@ -88,32 +88,32 @@ def process_row(row, node, mem, ref):
     attach(node, mem, ref)
 
 
-def process_scope(group, node, mem, ref):
+def process_scope(scope, node, mem, ref):
 
     ref += 1
 
     if node["type"] == "object":
         mem[ref] = {}
         for child in node["children"]:
-            traverse(group, child, mem, ref)
+            traverse(scope, child, mem, ref)
 
     elif node["type"] == "array":
         mem[ref] = []
         for child in node["children"]:
-            traverse(group, child, mem, ref)
+            traverse(scope, child, mem, ref)
 
     elif node["type"] == "leaf":
         if "value_col" in node:
-            mem[ref] = group.iloc[0][node["value_col"]]
+            mem[ref] = scope.iloc[0][node["value_col"]]
         else:
             mem[ref] = node["value"]
             
     if "name_col" in node:
-        node["name"] = group.iloc[0][node["name_col"]]
+        node["name"] = scope.iloc[0][node["name_col"]]
 
     if "func" in node:
         f = eval(node["func"])
-        mem[ref] = f(mem[ref], group.iloc[0], mem[ref-1])
+        mem[ref] = f(mem[ref], scope.iloc[0], mem[ref-1])
 
     ref -= 1
 
