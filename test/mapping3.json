@@ -22,7 +22,6 @@
                "children": [
                   {
                      "type": "object",
-                     "split": "name",
                      "children": [
                         {
                            "type": "array",

@@ -48,6 +48,10 @@ def traverse(df, node, mem, ref):
         if node["split"] == True:
             for row in scope.itertuples():
                 process_row(row, node, mem, ref)
+
+        elif node["split"] == False:
+            process_scope(scope, node, mem, ref)
+
         else:
             for group in scope.groupby(node["split"], sort=False):
                 process_scope(group[1], node, mem, ref)
@@ -55,37 +59,6 @@ def traverse(df, node, mem, ref):
         process_scope(scope, node, mem, ref)
 
     return mem[1]
-
-def process_row(row, node, mem, ref):
-
-    ref += 1
-
-    if node["type"] == "object":
-        mem[ref] = {}
-        for child in node["children"]:     
-            process_row(row, child, mem, ref)
-
-    elif node["type"] == "array":
-        mem[ref] = []
-        for child in node["children"]:
-            process_row(row, child, mem, ref)
-
-    elif node["type"] == "leaf":
-        if "value_col" in node:
-            mem[ref] = getattr(row, node["value_col"])
-        else:
-            mem[ref] = node["value"]
-            
-    if "name_col" in node:
-        node["name"] = getattr(row, node["name_col"])
-
-    if "func" in node:
-        f = eval(node["func"])
-        mem[ref] = f(mem[ref], row, mem[ref-1])
-
-    ref -= 1
-
-    attach(node, mem, ref)
 
 
 def process_scope(scope, node, mem, ref):
@@ -114,6 +87,38 @@ def process_scope(scope, node, mem, ref):
     if "func" in node:
         f = eval(node["func"])
         mem[ref] = f(mem[ref], scope.iloc[0], mem[ref-1])
+
+    ref -= 1
+
+    attach(node, mem, ref)
+
+
+def process_row(row, node, mem, ref):
+
+    ref += 1
+
+    if node["type"] == "object":
+        mem[ref] = {}
+        for child in node["children"]:     
+            process_row(row, child, mem, ref)
+
+    elif node["type"] == "array":
+        mem[ref] = []
+        for child in node["children"]:
+            process_row(row, child, mem, ref)
+
+    elif node["type"] == "leaf":
+        if "value_col" in node:
+            mem[ref] = getattr(row, node["value_col"])
+        else:
+            mem[ref] = node["value"]
+            
+    if "name_col" in node:
+        node["name"] = getattr(row, node["name_col"])
+
+    if "func" in node:
+        f = eval(node["func"])
+        mem[ref] = f(mem[ref], row, mem[ref-1])
 
     ref -= 1
 

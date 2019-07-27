@@ -14,23 +14,23 @@ func
 
 type must be either object, array, or leaf
 
-an object is parent to nodes with a name
-an array is parent to nodes without a name
+an object is parent to nodes with names
+an array is parent to nodes without names
 a leaf can not be parent to further nodes
 
 children is a list of all child nodes
 
-each child to an object has a name
-use name_col to fetch name from column
+each child to an object must have a name
+use name_col to fetch name dynamically from a column
 use name to set a hard coded name
 
 each leaf has a value (string, float, int, true, false, or none)
-use value_col to fetch value from column
+use value_col to fetch value dynamically from a column
 use value to set a hard coded value
 
-filter is used to set the scope of the dataframe
+filter is used to reduce the scope of the dataframe
 
-split is used to split the scope into groups and builds one JSON node for each group
+split is used to split the scope into groups and build one JSON node for each group
 if split is set to true each row of the scope becomes a group
 if split is a column name the scope is split by that column
 the full scope is considered one group by default
