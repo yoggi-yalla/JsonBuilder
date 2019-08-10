@@ -33,7 +33,8 @@ def main():
     output = traverse(df, mapping, mem, ref)
 
     print(df)
-    print(json.dumps(output, indent=3, sort_keys=True))
+    out = json.dumps(output, indent=3, sort_keys=True, ensure_ascii=False)
+    print(out)
     print(time.process_time())
 
 
@@ -44,17 +45,18 @@ def traverse(df, node, mem, ref):
     else:
         scope = df
 
-    if "split" in node:
-        if node["split"] == True:
+    if "split_by" in node:
+
+        if node["split_by"] == "row":
             for row in scope.itertuples():
                 process_row(row, node, mem, ref)
 
-        elif node["split"] == False:
-            process_scope(scope, node, mem, ref)
-
-        else:
-            for group in scope.groupby(node["split"], sort=False):
+        elif node["split_by"] == "group":
+            assert "group" in node
+            f = eval(node["group"])
+            for group in scope.groupby(f(), sort=False):
                 process_scope(group[1], node, mem, ref)
+
     else:
         process_scope(scope, node, mem, ref)
 
