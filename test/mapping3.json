@@ -3,8 +3,8 @@
    "children": [
       {
          "type": "object",
-         "split_by": "group",
-         "group": "lambda: df.name",
+         "multiple": true,
+         "group_by": "df.name",
          "children": [
             {
                "type": "leaf",
@@ -30,7 +30,7 @@
                            "children": [
                               {
                                  "type": "object",
-                                 "split_by": "row",
+                                 "multiple": true, 
                                  "children": [
                                     {
                                        "type": "leaf",

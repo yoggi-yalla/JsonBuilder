@@ -41,54 +41,51 @@ def main():
 def traverse(df, node, mem, ref):
 
     if "filter" in node:
-        scope = df.loc[eval(node["filter"])]
-    else:
-        scope = df
+        df = df["EUR" in df.name.asobject]
+        #df = df[eval(node["filter"])]
+        #df = df.loc[eval(node["filter"])]
 
-    if "split_by" in node:
+    if "multiple" in node and node["multiple"] == True:
 
-        if node["split_by"] == "row":
-            for row in scope.itertuples():
+        if "group_by" in node:
+            for group in df.groupby(eval(node["group_by"]), sort=False):
+                process_group(group[1], node, mem, ref)
+
+        else:
+            for row in df.itertuples():
                 process_row(row, node, mem, ref)
-
-        elif node["split_by"] == "group":
-            assert "group" in node
-            f = eval(node["group"])
-            for group in scope.groupby(f(), sort=False):
-                process_scope(group[1], node, mem, ref)
-
     else:
-        process_scope(scope, node, mem, ref)
-
+        process_group(df, node, mem, ref)
+    
     return mem[1]
 
 
-def process_scope(scope, node, mem, ref):
+def process_group(df, node, mem, ref):
 
     ref += 1
 
     if node["type"] == "object":
         mem[ref] = {}
         for child in node["children"]:
-            traverse(scope, child, mem, ref)
+            traverse(df, child, mem, ref)
 
     elif node["type"] == "array":
         mem[ref] = []
         for child in node["children"]:
-            traverse(scope, child, mem, ref)
+            traverse(df, child, mem, ref)
 
     elif node["type"] == "leaf":
         if "value_col" in node:
-            mem[ref] = scope.iloc[0][node["value_col"]]
+            mem[ref] = df.iloc[0][node["value_col"]]
         else:
             mem[ref] = node["value"]
             
     if "name_col" in node:
-        node["name"] = scope.iloc[0][node["name_col"]]
+        node["name"] = df.iloc[0][node["name_col"]]
 
     if "func" in node:
         f = eval(node["func"])
-        mem[ref] = f(mem[ref], scope.iloc[0], mem[ref-1])
+        mem[ref] = f(mem[ref], df.iloc[0], mem[ref-1])
 
     ref -= 1
 

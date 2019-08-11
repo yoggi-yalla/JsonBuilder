@@ -4,12 +4,12 @@
       {
          "type": "object",
          "name_col": "name",
-         "split_by": "group",
-         "group": "lambda: df.name",
+         "multiple": true,
+         "group_by": "df.name",
          "children": [
             {
                "type": "leaf",
-               "split_by": "row",
+               "multiple": true,
                "name_col": "date",
                "func": "lambda x,r,p: float(x)",
                "value_col": "discount_factor"
