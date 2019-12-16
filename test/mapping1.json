@@ -1,8 +1,8 @@
 {
-   "type": "array",
+   "type": "list",
    "children": [
       {
-         "type": "object",
+         "type": "dict",
          "multiple": true,
          "children": [
             {

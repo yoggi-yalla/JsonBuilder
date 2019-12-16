@@ -25,7 +25,7 @@ each child to an object must have a name
 use name_col to fetch name dynamically from a column
 use name to set a hard coded name
 
-each leaf has a value (string, float, int, true, false, or none)
+each leaf has a value (string, float, int, bool, or none)
 use value_col to fetch value dynamically from a column
 use value to set a hard coded value
 

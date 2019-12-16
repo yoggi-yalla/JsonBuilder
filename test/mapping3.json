@@ -4,7 +4,7 @@
       {
          "type": "object",
          "multiple": true,
-         "group_by": "df.name",
+         "group_by": "df.name.str[:3]",
          "children": [
             {
                "type": "leaf",

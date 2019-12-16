@@ -11,7 +11,7 @@
                "type": "leaf",
                "multiple": true,
                "name_col": "date",
-               "func": "lambda x,r,p: float(x)",
+               "lambda": "lambda x,r,o: float(x)",
                "value_col": "discount_factor"
             }
          ]
