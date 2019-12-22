@@ -5,13 +5,12 @@
          "type": "object",
          "name_col": "name",
          "multiple": true,
-         "group_by": "df.name",
+         "group_col": "name",
          "children": [
             {
                "type": "leaf",
                "multiple": true,
                "name_col": "date",
-               "lambda": "lambda x,r,o: float(x)",
                "value_col": "discount_factor"
             }
          ]

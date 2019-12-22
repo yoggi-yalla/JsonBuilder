@@ -4,7 +4,7 @@
       {
          "type": "object",
          "multiple": true,
-         "group_by": "df.name.str[:3]",
+         "group_col": "name",
          "children": [
             {
                "type": "leaf",
@@ -14,8 +14,7 @@
             {
                "type": "leaf",
                "name": "currency",
-               "value_col": "name",
-               "func": "lambda x,r,o: x[:3]"
+               "value_col": "name"
             },
             {
                "type": "array",

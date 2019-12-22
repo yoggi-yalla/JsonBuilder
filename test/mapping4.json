@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "children": [
+    {
+      "type": "array",
+      "name": "name",
+      "children": [
+        {
+          "type": "leaf",
+          "multiple": true,
+          "value_col": "name"
+        }
+      ]
+    },
+    {
+      "type": "array",
+      "name": "discount_factor",
+      "children": [
+        {
+          "type": "leaf",
+          "multiple": true,
+          "value_col": "discount_factor"
+        }
+      ]
+    },
+    {
+      "type": "array",
+      "name": "date",
+      "children": [
+        {
+          "type": "leaf",
+          "multiple": true,
+          "value_col": "date"
+        }
+      ]
+    }
+  ]
+}
