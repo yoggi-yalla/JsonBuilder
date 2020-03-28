@@ -2,44 +2,52 @@ import pandas as pd
 import argparse
 import json
 import time
-import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-table', nargs='?')
-parser.add_argument('-mapping', nargs='?')
+parser.add_argument('-format', nargs='?')
 args = parser.parse_args()
 
 
 '''
 Run the script in command line from this working dir:
-python df2json.py -table ../test/test.txt -mapping ../test/mapping3.json
+python df2json.py -table ../test/test.txt -format ../test/format3.json
 '''
 
-def main():    
-    df = pd.read_csv(args.table)
+df = pd.read_csv(args.table)
 
-    with open(args.mapping) as f:
-        mapping = json.load(f)
+with open(args.format) as f:
+    format = json.load(f)
 
-    root = build_tree(mapping)
+for f in format.get("functions",[]):
+    exec(f)
+
+for t in format.get("df_transforms",[]):
+    exec(t)
+
+
+def main():
+
+    root = build_tree(format["mapping"])
     mem = {}
     ref = 0
 
     output = traverse(df, root, mem, ref)
 
     print(df)
-    out = json.dumps(output, indent=3, sort_keys=True, ensure_ascii=False)
+    out = json.dumps(output, indent=3, ensure_ascii=False)
     print(out)
     print(time.process_time())
 
 
 def traverse(df, node, mem, ref):
+
     if node.filter:
-        df = df[df[node.filter_col].apply(is_match, regex=node.filter)]
+        df = df[eval(node.filter)]
 
     if node.multiple:
-        if node.group_col:
-            for group in df.groupby(node.group_col, sort=False):
+        if node.group_by:
+            for group in df.groupby(eval(node.group_by), sort=False):
                 process_group(group[1], node, mem, ref)
         else:
             for row in df.itertuples():          
@@ -68,9 +76,13 @@ def process_group(df, node, mem, ref):
             mem[ref] = df.iloc[0][node.value_col]
         else:
             mem[ref] = node.value
-            
+
     if node.name_col:
         node.name = df.iloc[0][node.name_col]
+
+    if node.func:
+        f = eval(node.func)
+        mem[ref] = f(mem[ref], df.iloc[0], mem[ref-1])
 
     ref -= 1
     attach(node, mem, ref)
@@ -98,6 +110,10 @@ def process_row(row, node, mem, ref):
     if node.name_col:
         node.name = getattr(row, node.name_col)
 
+    if node.func:
+        f = eval(node.func)
+        mem[ref] = f(mem[ref], row, mem[ref-1])
+
     ref -= 1
     attach(node, mem, ref)
 
@@ -108,52 +124,42 @@ def attach(node, mem, ref):
     else:            
         if type(mem[ref]) == dict:
             mem[ref][node.name] = mem[ref+1]
-            del mem[ref+1]
         else:
             mem[ref].append(mem[ref+1])
-            del mem[ref+1]
-
-
-def is_match(obj, regex):
-    if obj:
-        match = re.search(regex, obj)
-        if match:
-            return True
-        else:
-            return False
-    else:
-        return False
+        del mem[ref+1]
 
 
 class Node(object):
-    def __init__(self, mapping):
-        self.type = mapping["type"]
-        self.name = mapping.get("name")
-        self.name_col = mapping.get("name_col")
-        self.value = mapping.get("value")
-        self.value_col = mapping.get("value_col")
-        self.filter = mapping.get("filter")
-        self.filter_col = mapping.get("filter_col")
-        self.multiple = mapping.get("multiple")
-        self.group_col = mapping.get("group_col")
+    def __init__(self, m):
+        self.type = m["type"]
+        self.name = m.get("name")
+        self.name_col = m.get("name_col")
+        self.value = m.get("value")
+        self.value_col = m.get("value_col")
+        self.filter = m.get("filter")
+        self.multiple = m.get("multiple")
+        self.group_by = m.get("group_by")
+        self.func = m.get("func")
         self.children = []
 
     def add_child(self, obj):
         self.children.append(obj)
 
-def build_tree(mapping):
-    root = Node(mapping)
-    for c in mapping["children"]:
+
+def build_tree(m):
+    root = Node(m)
+    for c in m["children"]:
         build_sub_tree(root, c)
     return root
 
-def build_sub_tree(parent, mapping):
-    this_node = Node(mapping)
+
+def build_sub_tree(parent, m):
+    this_node = Node(m)
     parent.add_child(this_node)
-    if mapping.get("children") == None or len(mapping["children"]) == 0:
+    if not m.get("children"):
         pass
     else:
-        for c in mapping["children"]:
+        for c in m["children"]:
             build_sub_tree(this_node, c)
         
 

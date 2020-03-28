@@ -1,0 +1,77 @@
+{
+  "functions": [
+    "def f1(x,r,o): return 1/x",
+    "def f2(x,r,o): return 4/x",
+    "def f3(x,r,o): x[\"hey\"] = \"ho\"; return x"
+  ],
+  "df_transforms": [
+    "df[\"discount_factor\"] *= 2"
+  ],
+  "mapping": {
+    "type": "array",
+    "children": [
+      {
+        "type": "object",
+        "multiple": true,
+        "func": "f3",
+        "group_by": "df[\"name\"]",
+        "children": [
+          {
+            "type": "leaf",
+            "name": "action",
+            "value": "ADD_IR"
+          },
+          {
+            "type": "leaf",
+            "name": "currency",
+            "value_col": "name"
+          },
+          {
+            "type": "array",
+            "name": "ir_curves",
+            "children": [
+              {
+                "type": "object",
+                "children": [
+                  {
+                    "type": "array",
+                    "name": "points",
+                    "children": [
+                      {
+                        "type": "object",
+                        "multiple": true,
+                        "children": [
+                          {
+                            "type": "leaf",
+                            "value_col": "date",
+                            "name": "date"
+                          },
+                          {
+                            "type": "leaf",
+                            "value_col": "discount_factor",
+                            "func": "f1",
+                            "name": "df"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "leaf",
+                    "name": "type",
+                    "value": "BASE_CURVE"
+                  },
+                  {
+                    "type": "leaf",
+                    "name": "identifier",
+                    "value_col": "name"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
