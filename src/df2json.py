@@ -14,7 +14,6 @@ Run the script in command line from this working dir:
 python df2json.py -table ../test/test.txt -format ../test/format3.json
 '''
 
-df = pd.read_csv(args.table)
 
 with open(args.format) as f:
     format = json.load(f)
@@ -22,22 +21,23 @@ with open(args.format) as f:
 for f in format.get("functions",[]):
     exec(f)
 
-for t in format.get("df_transforms",[]):
-    exec(t)
-
 
 def main():
 
+    df = pd.read_csv(args.table)
+    for t in format.get("df_transforms",[]):
+        exec(t)
+
     root = build_tree(format["mapping"])
+
     mem = {}
     ref = 0
 
-    output = traverse(df, root, mem, ref)
+    output_json = traverse(df, root, mem, ref)
 
-    print(df)
-    out = json.dumps(output, indent=3, ensure_ascii=False)
-    print(out)
-    print(time.process_time())
+    output_str = json.dumps(output_json, indent=3, ensure_ascii=False)
+
+    print(output_str)
 
 
 def traverse(df, node, mem, ref):
@@ -50,7 +50,7 @@ def traverse(df, node, mem, ref):
             for group in df.groupby(eval(node.group_by), sort=False):
                 process_group(group[1], node, mem, ref)
         else:
-            for row in df.itertuples():          
+            for row in df.itertuples():
                 process_row(row, node, mem, ref)
     else:
         process_group(df, node, mem, ref)
@@ -82,7 +82,7 @@ def process_group(df, node, mem, ref):
 
     if node.func:
         f = eval(node.func)
-        mem[ref] = f(mem[ref], df.iloc[0], mem[ref-1])
+        mem[ref] = f(mem[ref], df.iloc[0].to_dict(), mem[ref-1])
 
     ref -= 1
     attach(node, mem, ref)
@@ -112,7 +112,7 @@ def process_row(row, node, mem, ref):
 
     if node.func:
         f = eval(node.func)
-        mem[ref] = f(mem[ref], row, mem[ref-1])
+        mem[ref] = f(mem[ref], row._asdict(), mem[ref-1])
 
     ref -= 1
     attach(node, mem, ref)
