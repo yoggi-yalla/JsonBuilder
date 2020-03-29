@@ -1,0 +1,95 @@
+{
+"functions":["def f1(x,r,o): return 1/x"],
+  "mapping": {
+    "type": "array",
+    "children": [
+      {
+        "type": "object",
+        "multiple": true,
+        "children": [
+          {
+            "type": "leaf",
+            "name": "valuation_date",
+            "value_col": "valuation_date"
+          },
+          {
+            "type": "leaf",
+            "name": "party_id",
+            "value_col": "party_id"
+          },
+          {
+            "type": "leaf",
+            "name": "counterparty_id",
+            "value_col": "counterparty_id"
+          },
+          {
+            "type": "leaf",
+            "name": "portfolio_id",
+            "value_col": "portfolio_id"
+          },
+          {
+            "type": "leaf",
+            "name": "product_class",
+            "value_col": "product_class"
+          },
+          {
+            "type": "leaf",
+            "name": "risk_type",
+            "value_col": "risk_type"
+          },
+          {
+            "type": "leaf",
+            "name": "qualifier",
+            "value_col": "qualifier"
+          },
+          {
+            "type": "leaf",
+            "name": "bucket",
+            "value_col": "bucket"
+          },
+          {
+            "type": "leaf",
+            "name": "label1",
+            "value_col": "label1"
+          },
+          {
+            "type": "leaf",
+            "name": "label2",
+            "value_col": "label2"
+          },
+          {
+            "type": "leaf",
+            "name": "amount",
+            "value_col": "amount",
+            "func": "f1"
+          },
+          {
+            "type": "leaf",
+            "name": "amount_currency",
+            "value_col": "amount_currency"
+          },
+          {
+            "type": "leaf",
+            "name": "post_regulations",
+            "value_col": "post_regulations"
+          },
+          {
+            "type": "leaf",
+            "name": "collect_regulations",
+            "value_col": "collect_regulations"
+          },
+          {
+            "type": "leaf",
+            "name": "im_model",
+            "value_col": "im_model"
+          },
+          {
+            "type": "leaf",
+            "name": "end_date",
+            "value_col": "end_date"
+          }
+        ]
+      }
+    ]
+  }
+}

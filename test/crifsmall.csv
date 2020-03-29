@@ -1,0 +1,4 @@
+valuation_date,party_id,counterparty_id,portfolio_id,trade_id,product_class,risk_type,qualifier,bucket,label1,label2,amount,amount_currency,post_regulations,collect_regulations,im_model,end_date
+2020-03-25,abc,def,ghi,123,Commodity,Risk_Commodity,Precious Metals Gold,12,,,-9874.07,EUR,FINMA,FINMA,SIMM,
+2020-03-25,abc,def,ghi,123,Commodity,Risk_Commodity,Precious Metals Gold,12,,,-9873.97,EUR,FINMA,FINMA,SIMM,
+2020-03-25,abc,def,ghi,124,Commodity,Risk_Commodity,Precious Metals Gold,12,,,-9873.87,EUR,FINMA,FINMA,SIMM,
