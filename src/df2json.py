@@ -1,8 +1,10 @@
 import pandas as pd
 import argparse
 import json
+import rapidjson
 import time
-import profile
+import cProfile
+import pstats
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--table')
@@ -17,26 +19,28 @@ python df2json.py -t ../test/test.txt -f ../test/format3.json
 '''
 
 
+
 with open(args.format) as f:
     format = json.load(f)
+
 
 for f in format.get("functions",[]):
     exec(f)
 
 
+df = pd.read_csv(args.table)
+for t in format.get("df_transforms",[]):
+    exec(t)
+
+mem = []
+
+
 def main():
-
-    df = pd.read_csv(args.table)
-    for t in format.get("df_transforms",[]):
-        exec(t)
-
+    
     root = build_tree(format["mapping"])
-
-    mem = {}
-    ref = 0
-
-    output_json = traverse(df, root, mem, ref)
-    output_str = json.dumps(output_json, indent=3)
+    
+    output_json = traverse(root, df)
+    output_str = rapidjson.dumps(output_json, indent=4)
     
     if args.output:
         with open(args.output, "w") as f:
@@ -47,7 +51,7 @@ def main():
     print(time.process_time())
 
 
-def traverse(df, node, mem, ref):
+def traverse(node, df):
 
     if node.filter:
         df = df[eval(node.filter)]
@@ -55,88 +59,69 @@ def traverse(df, node, mem, ref):
     if node.multiple:
         if node.group_by:
             for group in df.groupby(eval(node.group_by), sort=False):
-                process_group(group[1], node, mem, ref)
+                process(node, df=group[1])
         else:
             for row in df.itertuples():
                 row = row._asdict()
-                process_row(row, node, mem, ref)
+                process(node, row=row)
     else:
-        process_group(df, node, mem, ref)
-        
-    return mem[1]
+        if len(df) > 0:
+            process(node, df=df)
+    
+    return mem[-1] if mem else None
 
 
-def process_group(df, node, mem, ref):
-    ref += 1
+def process(node, df=None, row=None):
+
+    if row is None:
+        row = df.iloc[0].to_dict()
 
     if node.type == "object":
-        mem[ref] = {}
-        for child in node.children:
-            traverse(df, child, mem, ref)
+        mem.append({})
+        if df is None:
+            for child in node.children:
+                process(child, row=row)
+        else:
+            for child in node.children:
+                traverse(child, df)
 
     elif node.type == "array":
-        mem[ref] = []
-        for child in node.children:
-            traverse(df, child, mem, ref)
+        mem.append([])
+
+        if df is None:
+            for child in node.children:
+                process(child, row=row)
+        else:
+            for child in node.children:
+                traverse(child, df)
 
     elif node.type == "leaf":
         if node.value_col:
-            mem[ref] = df.iloc[0][node.value_col]
+            mem.append(row.get(node.value_col))
         else:
-            mem[ref] = node.value
+            mem.append(node.value)
 
     if node.name_col:
-        node.name = df.iloc[0][node.name_col]
+        node.name = row.get(node.name_col)
 
     if node.func:
-        mem[ref] = node.func(mem[ref], df.iloc[0].to_dict(), mem[ref-1])
+        mem[-1] = node.func(mem[-1], row, mem[-2])
 
-    ref -= 1
-    attach(node, mem, ref)
+    attach(node, mem)
 
 
-def process_row(row, node, mem, ref):
-    ref += 1
-
-    if node.type == "object":
-        mem[ref] = {}
-        for child in node.children:     
-            process_row(row, child, mem, ref)
-
-    elif node.type == "array":
-        mem[ref] = []
-        for child in node.children:
-            process_row(row, child, mem, ref)
-    
-    elif node.type == "leaf":
-        if node.value_col:
-            mem[ref] = row[node.value_col]
+def attach(node, mem):
+    if len(mem) > 1:
+        attachment = mem.pop()
+        if isinstance(mem[-1], dict):
+            mem[-1][node.name] = attachment
         else:
-            mem[ref] = node.value
-    
-    if node.name_col:
-        node.name = row[node.name_col]
-
-    if node.func:
-        mem[ref] = node.func(mem[ref], row, mem[ref-1])
-
-    ref -= 1
-    attach(node, mem, ref)
-
-
-def attach(node, mem, ref):
-    if ref == 0:
-        pass
-    else:            
-        if isinstance(mem[ref], dict):
-            mem[ref][node.name] = mem[ref+1]
-        else:
-            mem[ref].append(mem[ref+1])
+            mem[-1].append(attachment)
 
 
 class Node(object):
     def __init__(self, m):
-        self.type = m["type"]
+        self.type = m.get("type", "leaf")
         self.name = m.get("name")
         self.name_col = m.get("name_col")
         self.value = m.get("value")
@@ -168,3 +153,6 @@ def build_sub_tree(parent, m):
 
 if __name__ == "__main__":
     main()
+    #cProfile.run("main()", 'restats')
+    #p = pstats.Stats('restats')
+    #p.sort_stats('cumtime').print_stats(35)
