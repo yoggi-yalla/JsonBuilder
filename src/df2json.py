@@ -2,19 +2,18 @@ import pandas as pd
 import argparse
 import json
 import time
-import orjson
 import profile
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-table', nargs='?')
-parser.add_argument('-format', nargs='?')
-parser.add_argument('-o', nargs='?')
+parser.add_argument('-t', '--table')
+parser.add_argument('-f', '--format')
+parser.add_argument('-o', '--output', nargs='?')
 args = parser.parse_args()
 
 
 '''
 Run the script in command line from this working dir:
-python df2json.py -table ../test/test.txt -format ../test/format3.json
+python df2json.py -t ../test/test.txt -f ../test/format3.json -o out.json
 '''
 
 
@@ -39,8 +38,11 @@ def main():
     output_json = traverse(df, root, mem, ref)
     output_str = json.dumps(output_json, indent=3)
     
-    with open(args.o, "w") as f:
-    	f.write(output_str)
+    if args.output:
+        with open(args.output, "w") as f:
+    	    f.write(output_str)
+    else:
+        print(output_str)
 
     print(time.process_time())
 
@@ -87,8 +89,7 @@ def process_group(df, node, mem, ref):
         node.name = df.iloc[0][node.name_col]
 
     if node.func:
-        f = node.func
-        mem[ref] = f(mem[ref], df.iloc[0].to_dict(), mem[ref-1])
+        mem[ref] = node.func(mem[ref], df.iloc[0].to_dict(), mem[ref-1])
 
     ref -= 1
     attach(node, mem, ref)
@@ -117,8 +118,7 @@ def process_row(row, node, mem, ref):
         node.name = row[node.name_col]
 
     if node.func:
-        f = node.func
-        mem[ref] = f(mem[ref], row, mem[ref-1])
+        mem[ref] = node.func(mem[ref], row, mem[ref-1])
 
     ref -= 1
     attach(node, mem, ref)
@@ -153,7 +153,7 @@ class Node(object):
 
 def build_tree(m):
     root = Node(m)
-    for c in m["children"]:
+    for c in m.get("children", []):
         build_sub_tree(root, c)
     return root
 
@@ -161,11 +161,8 @@ def build_tree(m):
 def build_sub_tree(parent, m):
     this_node = Node(m)
     parent.add_child(this_node)
-    if not m.get("children"):
-        pass
-    else:
-        for c in m["children"]:
-            build_sub_tree(this_node, c)
+    for c in m.get("children", []):
+        build_sub_tree(this_node, c)
         
 
 
