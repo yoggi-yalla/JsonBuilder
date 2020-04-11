@@ -1,2 +1,0 @@
-﻿name,discount_factor,date
-USD_OIS,0.99,2019-05-18

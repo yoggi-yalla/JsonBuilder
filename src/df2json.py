@@ -13,7 +13,7 @@ args = parser.parse_args()
 
 '''
 Run the script in command line from this working dir:
-python df2json.py -t ../test/test.txt -f ../test/format3.json -o out.json
+python df2json.py -t ../test/test.txt -f ../test/format3.json
 '''
 
 

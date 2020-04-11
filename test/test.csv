@@ -1,3 +1,5 @@
-name	discount_factor	date
-USD_OIS	0.99	2019-05-18
-USD_OIS	0.95	2020-05-18
+﻿name,discount_factor,date
+USD_OIS,0.99,2019-05-18
+USD_OIS,0.95,2020-05-18
+EUR_OIS,0.99,2019-05-18
+EUR_OIS,0.95,2020-05-18
