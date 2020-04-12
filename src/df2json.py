@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import argparse
 import json
 from collections import namedtuple
@@ -41,6 +42,9 @@ mem = [] # dedicated stack for json construction
 def main(): 
     if args.table:
         df = pd.read_csv(args.table)
+
+        # NaN is not valid JSON so best get rid of it here
+        df = df.replace({np.nan:None})
     else:
         df = pd.DataFrame()
 
@@ -101,15 +105,16 @@ def build_slow(node, df):
             for child in node.children:
                 build_fast(node, row, False)
                 
-    else: #if node.is_prim:
+    elif node.is_prim:
         if node.value_col:
-            mem.append(getattr(row, node.value_col, node.value))
+            value = getattr(row, node.value_col)
+            mem.append(value if value else node.value)
         else:
             mem.append(node.value)
 
     if node.name_col:
-        node.name = getattr(row, node.name_col, node.name)
-
+        name = getattr(row, node.name_col)
+        node.name = name if name else node.name
 
     if node.func:
         mem[-1] = node.func(mem[-1], row, df)
@@ -128,15 +133,16 @@ def build_fast(node, row, parent_is_obj):
         for child in node.children:
             build_fast(child,row,False)
 
-    else: #if node.is_prim:
+    elif node.is_prim:
         if node.value_col:
-            mem.append(getattr(row, node.value_col, node.value))
+            value = getattr(row, node.value_col)
+            mem.append(value if value else node.value)
         else:
             mem.append(node.value)
 
-    if parent_is_obj:
-        if node.name_col:
-            node.name = getattr(row, node.name_col, node.name)
+    if node.name_col:
+        name = getattr(row, node.name_col)
+        node.name = name if name else node.name
 
 
     if node.func:
