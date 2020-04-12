@@ -1,5 +1,13 @@
 {
   "mapping": {
-  "type":"array"
+    "type": "object",
+    "children": [
+    {
+    "value_col":"name2",
+    "value": "haj",
+    "name_col":"namesd",
+    "name":"haj"
+    }
+    ]
   }
 }

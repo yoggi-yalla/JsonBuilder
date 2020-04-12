@@ -9,7 +9,6 @@
         "group_by": "df[\"name\"]",
         "children": [
           {
-            "type": "leaf",
             "multiple": true,
             "name_col": "date",
             "value_col": "discount_factor"

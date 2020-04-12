@@ -5,6 +5,9 @@ import rapidjson
 import time
 import cProfile
 import pstats
+import os
+import functools
+from collections import namedtuple
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
@@ -35,13 +38,15 @@ for t in format.get("df_transforms",[]):
 for f in format.get("functions",[]):
     exec(f)
 
-mem = [] # dedicated stack memory for json construction
+mem = [] # dedicated stack for json construction
 
 
 def main(): 
     root = build_tree(mapping)
     
-    output_raw = traverse(root, df)
+    parent_is_obj = root.type == "object"
+
+    output_raw = traverse(root, df, parent_is_obj)
     output_str = rapidjson.dumps(output_raw, indent=3)
     
     if args.output:
@@ -53,54 +58,104 @@ def main():
     print(time.process_time())
 
 
-def traverse(node, df):
+def traverse(node, df, parent_is_obj):
     if node.filter:
         df = df[eval(node.filter)]
 
     if node.multiple:
         if node.group_by:
             for group in df.groupby(eval(node.group_by), sort=False):
-                process(node, df=group[1])
+                build_slow(node, group[1])
         else:
             for row in df.itertuples():
-                row = row._asdict()
-                process(node, row=row)
+                build_fast(node, row, parent_is_obj)
     else:
-        process(node, df=df)
+        build_slow(node, df)
     
     return mem[-1] if mem else None
 
 
-def process(node, df=pd.DataFrame(), row={}):
-    if not row and len(df)>0:
-        row = df.iloc[0].to_dict()
+def build_slow(node, df):
+    if not len(df.index) == 0:
+        row = namedtuple_me(df.iloc[0])
 
-    if node.type in ("object", "array"):
-        mem.append({} if node.type == "object" else [])
-        if len(df)>0:
+    if node.type == "object":
+        mem.append({})
+        if not len(df.index) == 0:
             for child in node.children:
-                traverse(child, df)
+                traverse(child, df, True)
         else:
             for child in node.children:
-                process(child, row=row)
+                build_fast(node, row, True)
+
+    elif node.type == "array":
+        mem.append([])
+        if not len(df.index) == 0:
+            for child in node.children:
+                traverse(child, df, False)
+        else:
+            for child in node.children:
+                build_fast(node, row, False)
+                
     else:
         if node.value_col:
-            mem.append(row.get(node.value_col))
+            mem.append(getattr(row, node.value_col, node.value))
         else:
             mem.append(node.value)
-    
+
     if node.name_col:
-        node.name = row.get(node.name_col)
+        node.name = getattr(row, node.name_col, node.name)
 
     if node.func:
         mem[-1] = node.func(mem[-1], row, df)
 
-    if len(mem) > 1:
-        attachment = mem.pop()
+    attach_slow(node)
+
+
+def build_fast(node, row, parent_is_obj):
+
+    if node.type == "leaf":
+        if node.value_col:
+            mem.append(getattr(row, node.value_col, node.value))
+        else:
+            mem.append(node.value)
+
+    elif node.type == "object":
+        mem.append({})
+        for child in node.children:
+            build_fast(child,row,True)
+
+    else:
+        mem.append([])
+        for child in node.children:
+            build_fast(child,row,False)
+
+    if parent_is_obj:
+        if node.name_col:
+            node.name = getattr(row, node.name_col, node.name)
+
+    if node.func:
+        mem[-1] = node.func(mem[-1], row, df)
+
+    attach_fast(node, parent_is_obj)
+
+
+def attach_slow(node):
+    attachment = mem.pop()
+    if mem:
         if isinstance(mem[-1], dict):
             mem[-1][node.name] = attachment
         else:
             mem[-1].append(attachment)
+    else:
+        mem.append(attachment)
+
+def attach_fast(node,parent_is_obj):
+    attachment = mem.pop()
+    if parent_is_obj:
+        mem[-1][node.name] = attachment
+    else:
+        mem[-1].append(attachment)
 
 
 class Node(object):
@@ -131,9 +186,19 @@ def build_sub_tree(parent, m):
     for c in m.get("children", []):
         build_sub_tree(this_node, c)
 
+
+@functools.lru_cache(maxsize=None)
+def _get_class(fieldnames, name):
+    return namedtuple(name, fieldnames)
+
+def namedtuple_me(series, name='do_not_use_this_as_col_name'):
+    klass = _get_class(tuple(series.index), name)
+    return klass._make(series)
     
 if __name__ == "__main__":
     main()
-    #cProfile.run("main()", 'restats')
-    #p = pstats.Stats('restats')
-    #p.sort_stats('time').print_stats(35)
+    #cProfile.run("main()", 'tmp')
+    #p = pstats.Stats('tmp')
+    #p.sort_stats('cumtime').print_stats(20)
+    #os.remove('tmp')
+    
