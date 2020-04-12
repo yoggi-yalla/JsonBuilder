@@ -3,9 +3,8 @@
     "type": "object",
     "children": [
     {
-    "value_col":"name2",
     "value": "haj",
-    "name_col":"namesd",
+    "value_col": "name2",
     "name":"haj"
     }
     ]

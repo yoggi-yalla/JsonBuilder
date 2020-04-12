@@ -1,13 +1,18 @@
 import pandas as pd
 import argparse
 import json
-import rapidjson
+from collections import namedtuple
+
+#orjson gives a huge performance boost when writing json
+import orjson
+
+#The following imports are only relevant for benchmarking
 import time
 import cProfile
 import pstats
 import os
-import functools
-from collections import namedtuple
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
@@ -26,14 +31,6 @@ with open(args.format) as f:
     format = json.load(f)
 
 mapping = format.get("mapping", {})
-
-if args.table:
-    df = pd.read_csv(args.table)
-else:
-    df = pd.DataFrame()
-
-for t in format.get("df_transforms",[]):
-    exec(t)
     
 for f in format.get("functions",[]):
     exec(f)
@@ -42,18 +39,23 @@ mem = [] # dedicated stack for json construction
 
 
 def main(): 
-    root = build_tree(mapping)
-    
-    parent_is_obj = root.type == "object"
+    if args.table:
+        df = pd.read_csv(args.table)
+    else:
+        df = pd.DataFrame()
 
-    output_raw = traverse(root, df, parent_is_obj)
-    output_str = rapidjson.dumps(output_raw, indent=3)
+    for t in format.get("df_transforms",[]):
+        exec(t)
+
+    root = build_tree(mapping)
+    output_raw = traverse(root, df, False)
     
     if args.output:
-        with open(args.output, "w") as f:
-    	    f.write(output_str)
+        with open(args.output, "wb") as f:
+            output_binary = orjson.dumps(output_raw, option=orjson.OPT_INDENT_2)
+            f.write(output_binary)
     else:
-        print(output_str)
+        print(json.dumps(output_raw, indent=2))
 
     print(time.process_time())
 
@@ -77,9 +79,11 @@ def traverse(node, df, parent_is_obj):
 
 def build_slow(node, df):
     if not len(df.index) == 0:
-        row = namedtuple_me(df.iloc[0])
+        row = namedtuple('SomeGenericTupleName',df.iloc[0].index)(*df.iloc[0])
+    else:
+        row = ()
 
-    if node.type == "object":
+    if node.is_obj:
         mem.append({})
         if not len(df.index) == 0:
             for child in node.children:
@@ -88,7 +92,7 @@ def build_slow(node, df):
             for child in node.children:
                 build_fast(node, row, True)
 
-    elif node.type == "array":
+    elif node.is_arr:
         mem.append([])
         if not len(df.index) == 0:
             for child in node.children:
@@ -97,7 +101,7 @@ def build_slow(node, df):
             for child in node.children:
                 build_fast(node, row, False)
                 
-    else:
+    else: #if node.is_prim:
         if node.value_col:
             mem.append(getattr(row, node.value_col, node.value))
         else:
@@ -106,6 +110,7 @@ def build_slow(node, df):
     if node.name_col:
         node.name = getattr(row, node.name_col, node.name)
 
+
     if node.func:
         mem[-1] = node.func(mem[-1], row, df)
 
@@ -113,29 +118,29 @@ def build_slow(node, df):
 
 
 def build_fast(node, row, parent_is_obj):
+    if node.is_obj:
+        mem.append({})
+        for child in node.children:
+            build_fast(child,row,True)
 
-    if node.type == "leaf":
+    elif node.is_arr:
+        mem.append([])
+        for child in node.children:
+            build_fast(child,row,False)
+
+    else: #if node.is_prim:
         if node.value_col:
             mem.append(getattr(row, node.value_col, node.value))
         else:
             mem.append(node.value)
 
-    elif node.type == "object":
-        mem.append({})
-        for child in node.children:
-            build_fast(child,row,True)
-
-    else:
-        mem.append([])
-        for child in node.children:
-            build_fast(child,row,False)
-
     if parent_is_obj:
         if node.name_col:
             node.name = getattr(row, node.name_col, node.name)
 
+
     if node.func:
-        mem[-1] = node.func(mem[-1], row, df)
+        mem[-1] = node.func(mem[-1], row, None)
 
     attach_fast(node, parent_is_obj)
 
@@ -150,7 +155,7 @@ def attach_slow(node):
     else:
         mem.append(attachment)
 
-def attach_fast(node,parent_is_obj):
+def attach_fast(node, parent_is_obj):
     attachment = mem.pop()
     if parent_is_obj:
         mem[-1][node.name] = attachment
@@ -160,7 +165,7 @@ def attach_fast(node,parent_is_obj):
 
 class Node(object):
     def __init__(self, m):
-        self.type = m.get("type", "leaf")
+        self.type = m.get("type", "primitive")
         self.name = m.get("name", "MISSING_NAME")
         self.name_col = m.get("name_col")
         self.value = m.get("value")
@@ -170,6 +175,9 @@ class Node(object):
         self.group_by = m.get("group_by")
         self.func = eval(m.get("func", "False"))
         self.children = []
+        self.is_prim = self.type == "primitive"
+        self.is_obj = self.type == "object"
+        self.is_arr = self.type == "array"
 
     def add_child(self, obj):
         self.children.append(obj)
@@ -187,14 +195,6 @@ def build_sub_tree(parent, m):
         build_sub_tree(this_node, c)
 
 
-@functools.lru_cache(maxsize=None)
-def _get_class(fieldnames, name):
-    return namedtuple(name, fieldnames)
-
-def namedtuple_me(series, name='do_not_use_this_as_col_name'):
-    klass = _get_class(tuple(series.index), name)
-    return klass._make(series)
-    
 if __name__ == "__main__":
     main()
     #cProfile.run("main()", 'tmp')
