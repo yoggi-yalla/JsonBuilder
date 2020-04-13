@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import argparse
 import time
 import json
@@ -26,30 +25,28 @@ for f in format.get('functions',[]):
 mapping = format.get('mapping', {})
 df = pd.read_csv(args.table)
 
-print(df)
 for t in format.get('column_transforms',[]):
     f = eval(t['func'])
     col = t.get('col')
     df[col] = f(df,col)
-    print(df)
 
 
 def main(): 
     mapping_tree = build_tree(mapping)
     stack = []
 
-    output_raw = traverse(mapping_tree, stack, df)
-    output_bin = orjson.dumps(
-                output_raw, 
+    output_native = traverse(mapping_tree, stack, df)
+    output_binary = orjson.dumps(
+                output_native, 
                 option=orjson.OPT_INDENT_2|orjson.OPT_NON_STR_KEYS, 
                 default=lambda x:None
                 )
     
     if args.output:
         with open(args.output, 'wb') as f:
-            f.write(output_bin)
+            f.write(output_binary)
     else:
-        print(output_bin.decode('UTF8'))
+        print(output_binary.decode('UTF8'))
 
     print(time.process_time())
 

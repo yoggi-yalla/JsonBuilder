@@ -11,10 +11,6 @@
       "func": "lambda df,col: df[col]*6"
     },
     {
-      "col": "name2",
-      "func": "f4"
-    },
-    {
       "col": "new_col",
       "func": "lambda df, col: df[\"discount_factor\"]/3"
     }
