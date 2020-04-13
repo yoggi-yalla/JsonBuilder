@@ -1,0 +1,5 @@
+﻿name,discount_factor,date,name2
+,0.99,2020-01-01,
+USD_OIS,0.95,,
+EUR_OIS,,2020-01-01,
+EUR_OIS,0.95,2020-02-01,

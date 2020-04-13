@@ -13,7 +13,7 @@ multiple
 group_by
 func
 
-type must be either 'object', 'array', or 'leaf'
+type must be either 'object', 'array', or 'primitive'
 
 an object is parent to nodes with names
 an array is parent to nodes without names
@@ -25,14 +25,15 @@ each child to an object must have a name
 use name_col to fetch name dynamically from a column
 use name to set a hard coded name
 
-each leaf has a value (string, float, int, bool, or none)
+each primitive has a value (string, float, int, bool, or none)
 use value_col to fetch value dynamically from a column
 use value to set a hard coded value
 
 filter is used to reduce the scope of the dataframe
 
-('multiple': true) means the current scope should generate multiple nodes
-the default behavior is that each row of the scope generates one node,
+('multiple': true) 
+means the current scope should generate multiple instances of this node
+the default behavior (false) is to generate one instance of this node
 if group_by is also present then each group of the scope generates one node
 group_by should contain a pandas groupby function, e.g. 'df.col_name'
 
