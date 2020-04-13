@@ -6,7 +6,6 @@ import json
 import orjson
 from collections import namedtuple
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
 parser.add_argument('-t', '--table')
@@ -21,15 +20,18 @@ python df2json.py -t ../test/test.csv -f ../test/format3.json
 with open(args.format) as f:
     format = json.load(f)
 
-mapping = format.get('mapping', {})
-
-df = pd.read_csv(args.table)
-
-for t in format.get('df_transforms',[]):
-    exec(t)
-
 for f in format.get('functions',[]):
     exec(f)
+
+mapping = format.get('mapping', {})
+df = pd.read_csv(args.table)
+
+print(df)
+for t in format.get('column_transforms',[]):
+    f = eval(t['func'])
+    col = t.get('col')
+    df[col] = f(df,col)
+    print(df)
 
 
 def main(): 
@@ -102,7 +104,6 @@ def build(node, stack, row=None, df=None):
             stack.append(value if value else node.value)
         else:
             stack.append(node.value)
-    
 
     if node.name_col:
         name = getattr(row, node.name_col)
@@ -146,6 +147,8 @@ class Node(object):
         
 
     def add_child(self, obj):
+        if self.is_prim:
+            raise ValueError("Primitive nodes can't have children")
         self.children.append(obj)
 
 def build_tree(m):
