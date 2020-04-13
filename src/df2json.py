@@ -32,7 +32,6 @@ for f in format.get('functions',[]):
     exec(f)
 
 
-
 def main(): 
     mapping_tree = build_tree(mapping)
     stack = []
@@ -110,6 +109,7 @@ def build(node, stack, row=None, df=None):
         node.name = name if name else node.name
 
     if node.func:
+        # Modifies the top element of the stack before consolidating
         stack[-1] = node.func(stack[-1], row, df)
     
     consolidate(node, stack)
