@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import argparse
 import time
 import json
@@ -38,8 +39,7 @@ def main():
     output_native = traverse(mapping_tree, stack, df)
     output_binary = orjson.dumps(
                 output_native, 
-                option=orjson.OPT_INDENT_2|orjson.OPT_NON_STR_KEYS, 
-                default=lambda x:None
+                option=orjson.OPT_INDENT_2|orjson.OPT_NON_STR_KEYS,
                 )
     
     if args.output:
@@ -75,35 +75,29 @@ def build(node, stack, row=None, df=None):
     if df is not None:
         row = namedtuple('SomeGenericTupleName',df.iloc[0].index)(*df.iloc[0])
 
-    if node.is_obj:
-        stack.append({})
+    if node.is_obj or node.is_arr:
+        stack.append({} if node.is_obj else [])
         if df is not None:
             for child in node.children:
                 traverse(child, stack, df)
         else:
-            # Skip traverse if the scope is a single row
-            for child in node.children:
-                build(child, stack, row=row)
-
-    if node.is_arr:
-        stack.append([])
-        if df is not None:
-            for child in node.children:
-                traverse(child, stack, df)
-        else:
-            # Skip traverse if the scope is a single row
+            # Skip traverse if the scope is just a row
             for child in node.children:
                 build(child, stack, row=row)
                 
     elif node.is_prim:
         if node.value_col:
             value = getattr(row, node.value_col)
+            if value is np.nan:
+                value = None
             stack.append(value if value else node.value)
         else:
             stack.append(node.value)
 
     if node.name_col:
         name = getattr(row, node.name_col)
+        if name is np.nan:
+            name = None
         node.name = name if name else node.name
 
     if node.func:

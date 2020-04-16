@@ -5,11 +5,11 @@ from zipfile import ZipFile
 from io import BytesIO
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-file')
-parser.add_argument('-sep', nargs='?')
-parser.add_argument('-qchar', nargs='?')
-parser.add_argument('-enc', nargs='?')
-parser.add_argument('-pwd', nargs='?')
+parser.add_argument('-f', '--file')
+parser.add_argument('-s', '--sep', nargs='?')
+parser.add_argument('-q', '--qchar', nargs='?')
+parser.add_argument('-e', '--enc', nargs='?')
+parser.add_argument('-p', '--pwd', nargs='?')
 args = parser.parse_args()
 
 FILE_EXT = os.path.splitext(args.file)[1]
@@ -68,14 +68,14 @@ def text_to_df(table):
     return dataset
 
 def excel_to_df(table):
-    temp_datasets = {}
+    datasets = {}
     with open(table, 'rb') as f:
         xls = pd.ExcelFile(f)
         for sheet in xls.sheet_names:
-            temp_datasets[os.path.basename(table) + '.' + sheet] = (
+            datasets[os.path.basename(table) + '.' + sheet] = (
                 pd.read_excel(f, sheet_name=sheet).astype(str)
             )
-        return temp_datasets
+        return datasets
          
 def sniff_for_sep(table_file, sniff_length=2000):
     with open(table_file) as f:
