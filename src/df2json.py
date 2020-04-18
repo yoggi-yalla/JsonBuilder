@@ -24,6 +24,7 @@ for f in format.get('functions',[]):
     exec(f)
 
 mapping = format.get('mapping', {})
+
 df = pd.read_csv(args.table)
 
 for t in format.get('column_transforms',[]):
@@ -71,12 +72,12 @@ def traverse(node, stack, df):
 
 
 def build(node, stack, row=None, df=None):
-    # Builds one JSON value (obj, arr, or prim) and pushes it to the stack
+    # Builds one JSON value (obj, arr, or prim) and appends it to the stack
     if df is not None:
         row = namedtuple('SomeGenericTupleName',df.iloc[0].index)(*df.iloc[0])
 
-    if node.is_obj or node.is_arr:
-        stack.append({} if node.is_obj else [])
+    if node._is_object or node._is_array:
+        stack.append({} if node._is_object else [])
         if df is not None:
             for child in node.children:
                 traverse(child, stack, df)
@@ -84,8 +85,8 @@ def build(node, stack, row=None, df=None):
             # Skip traverse if the scope is just a row
             for child in node.children:
                 build(child, stack, row=row)
-                
-    elif node.is_prim:
+
+    elif node._is_primitive:
         if node.value_col:
             value = getattr(row, node.value_col)
             if value is np.nan:
@@ -93,6 +94,9 @@ def build(node, stack, row=None, df=None):
             stack.append(value if value else node.value)
         else:
             stack.append(node.value)
+
+    elif node._is_quickarray:
+        stack.append(df[node.value_col].tolist())
 
     if node.name_col:
         name = getattr(row, node.name_col)
@@ -108,14 +112,14 @@ def build(node, stack, row=None, df=None):
 
 def consolidate(node, stack):
     # Takes the top element of the stack and attaches it to its parent
-    attachment = stack.pop()
+    value = stack.pop()
     if stack:
         if isinstance(stack[-1], dict):
-            stack[-1][node.name] = attachment
+            stack[-1][node.name] = value
         else:
-            stack[-1].append(attachment)
+            stack[-1].append(value)
     else:
-        stack.append(attachment)
+        stack.append(value)
 
 class Node(object):
     def __init__(self, m):
@@ -129,17 +133,17 @@ class Node(object):
         self.group_by = m.get('group_by')
         self.func = eval(m.get('func', 'False'))
         self.children = []
-        self.is_prim = self.type == 'primitive'
-        self.is_obj = self.type == 'object'
-        self.is_arr = self.type == 'array'
+
+        self._is_primitive = self.type == 'primitive'
+        self._is_object = self.type == 'object'
+        self._is_array = self.type == 'array'
+        self._is_quickarray = self.type == 'quickarray'
         
-        if self.type not in ('object', 'array', 'primitive'):
+        if self.type not in ('object', 'array', 'primitive', 'quickarray'):
             raise ValueError("Invalid node type: {}".format(self.type))
         
 
     def add_child(self, obj):
-        if self.is_prim:
-            raise ValueError("Primitive nodes can't have children")
         self.children.append(obj)
 
 def build_tree(m):

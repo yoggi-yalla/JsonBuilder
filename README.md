@@ -1,2 +1,2 @@
 # table2json
-This is a tool for converting tabular data to structured json files.
+This is a tool for converting a Pandas DataFrame to a structured JSON format.

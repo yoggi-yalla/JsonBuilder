@@ -1,0 +1,22 @@
+{
+  "mapping": {
+    "type": "object",
+    "children": [
+      {
+        "type": "quickarray",
+        "value_col": "name",
+        "name": "name"
+      },
+      {
+        "type": "quickarray",
+        "value_col": "discount_factor",
+        "name": "discount_factor"
+      },
+      {
+        "type": "quickarray",
+        "value_col": "date",
+        "name": "date"
+      }
+    ]
+  }
+}
