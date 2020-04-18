@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
 parser.add_argument('-t', '--table')
 parser.add_argument('-o', '--output', nargs='?')
+parser.add_argument('-s', '--silent', dest='silent', action='store_true')
 args = parser.parse_args()
 
 '''
@@ -20,39 +21,33 @@ python df2json.py -t ../test/test.csv -f ../test/format3.json
 with open(args.format) as f:
     format = json.load(f)
 
-for f in format.get('functions',[]):
+for f in format.get('global_funcs',[]):
     exec(f)
-
-mapping = format.get('mapping', {})
-
-df = pd.read_csv(args.table)
-
-for t in format.get('column_transforms',[]):
-    f = eval(t['func'])
-    col = t.get('col')
-    df[col] = f(df,col)
 
 
 def main(): 
-    mapping_tree = build_tree(mapping)
-    stack = []
+    mapping = build_tree(format.get('mapping'))
 
-    output_native = traverse(mapping_tree, stack, df)
+    df = pd.read_csv(args.table)
+    df = apply_column_transforms(df, format.get('column_transforms',[]))
+
+    output_native = traverse(df, mapping, [])
     output_binary = orjson.dumps(
                 output_native, 
                 option=orjson.OPT_INDENT_2|orjson.OPT_NON_STR_KEYS,
                 )
-    
-    if args.output:
-        with open(args.output, 'wb') as f:
-            f.write(output_binary)
-    else:
-        print(output_binary.decode('UTF8'))
+
+    if not args.silent:
+        if args.output:
+            with open(args.output, 'wb') as f:
+                f.write(output_binary)
+        else:
+            print(output_binary.decode('UTF8'))
 
     print(time.process_time())
 
 
-def traverse(node, stack, df):
+def traverse(df, node, stack):
     # Traverses the dataframe and coordinates 'build'-calls
     if node.filter:
         df = df[eval(node.filter)]
@@ -80,9 +75,8 @@ def build(node, stack, row=None, df=None):
         stack.append({} if node._is_object else [])
         if df is not None:
             for child in node.children:
-                traverse(child, stack, df)
+                traverse(df, child, stack)
         else:
-            # Skip traverse if the scope is just a row
             for child in node.children:
                 build(child, stack, row=row)
 
@@ -105,7 +99,6 @@ def build(node, stack, row=None, df=None):
         node.name = name if name else node.name
 
     if node.func:
-        # Modifies the top element of the stack before consolidating
         stack[-1] = node.func(stack[-1], row, df)
     
     consolidate(node, stack)
@@ -120,6 +113,7 @@ def consolidate(node, stack):
             stack[-1].append(value)
     else:
         stack.append(value)
+
 
 class Node(object):
     def __init__(self, m):
@@ -141,7 +135,6 @@ class Node(object):
         
         if self.type not in ('object', 'array', 'primitive', 'quickarray'):
             raise ValueError("Invalid node type: {}".format(self.type))
-        
 
     def add_child(self, obj):
         self.children.append(obj)
@@ -157,6 +150,14 @@ def build_sub_tree(parent, m):
     parent.add_child(this_node)
     for c in m.get('children', []):
         build_sub_tree(this_node, c)
+
+
+def apply_column_transforms(df, column_transforms):
+    for t in column_transforms:
+        f = eval(t['func'])
+        col = t.get('col')
+        df[col] = f(df,col)
+    return df
 
 
 if __name__ == '__main__':
