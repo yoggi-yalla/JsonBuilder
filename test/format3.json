@@ -1,5 +1,5 @@
 {
-  "global_funcs": [
+  "functions": [
     "def f1(x,r,df): return 1/x",
     "def f2(x,r,df): return 4/x",
     "def f3(x,r,df): x[\"hey\"] = \"ho\"; return x",
@@ -22,7 +22,7 @@
         "type": "object",
         "multiple": true,
         "func": "f3",
-        "group_by": "df[\"name\"]",
+        "group_by": "lambda df: df[\"name\"]",
         "children": [
           {
             "name": "action",

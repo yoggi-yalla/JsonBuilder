@@ -6,7 +6,7 @@
         "type": "object",
         "name_col": "name",
         "multiple": true,
-        "group_by": "df[\"name\"]",
+        "group_by": "lambda df: df[\"name\"]",
         "children": [
           {
             "multiple": true,

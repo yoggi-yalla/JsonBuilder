@@ -1,5 +1,5 @@
 {
-  "global_funcs": [
+  "functions": [
     "def f1(x,r,o): return 1/x"
   ],
   "mapping": {
