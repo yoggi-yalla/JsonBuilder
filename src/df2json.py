@@ -31,9 +31,10 @@ def main():
     
     jb = JsonBuilder.Node(mapping, df, functions)
 
-    output_native = jb.build().value
+    name, value = jb.build()
+    
     output_binary = orjson.dumps(
-                output_native, 
+                value, 
                 option=orjson.OPT_INDENT_2|orjson.OPT_NON_STR_KEYS,
                 default=lambda x:None
                 )

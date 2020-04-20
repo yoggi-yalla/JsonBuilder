@@ -25,27 +25,38 @@ class Node(object):
             self.children.append(Node(child))
 
     def build(self):
-        if self._is_object or self._is_array:
-            self.value = {} if self._is_object else []
+        name, value = self.name, self.value
+        
+        if self._is_object:
+            value = {}
             for child in self.children:
                 child.df, child.row = self.df, self.row
                 for _ in child._next_scope():
-                    self.attach(child.build())
+                    k,v = child.build()
+                    value[k] = v
+
+        elif self._is_array:
+            value = []
+            for child in self.children:
+                child.df, child.row = self.df, self.row
+                for _ in child._next_scope():
+                    k,v = child.build()
+                    value.append(v)
 
         elif self._is_primitive:
             if self.value_col:
-                self.value = getattr(self.row, self.value_col)   
+                value = getattr(self.row, self.value_col)   
 
         elif self._is_prim_array:
-            self.value = self.df[self.value_col].tolist()
+            value = self.df[self.value_col].tolist()
 
         if self.name_col:
-            self.name = getattr(self.row, self.name_col)
+            name = getattr(self.row, self.name_col)
 
         if self.func:
-            self.value = self.func(self.value, self.row, self.df)
+            value = self.func(value, self.row, self.df)
 
-        return self
+        return name, value
 
     def _next_scope(self):
         if self.filter:
@@ -63,9 +74,3 @@ class Node(object):
                     yield
         else:
             yield
-    
-    def attach(self, child):
-        if self._is_object:
-            self.value[child.name] = child.value
-        elif self._is_array:
-            self.value.append(child.value)
