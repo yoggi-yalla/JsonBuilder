@@ -1,9 +1,9 @@
+from JsonBuilder import JsonBuilder
 import pandas as pd
 import argparse
 import time
 import json
 import orjson
-import JsonBuilder
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
@@ -14,7 +14,7 @@ args = parser.parse_args()
 
 '''
 Run the script in command line from this working dir:
-python df2json.py -t ../test/test.csv -f ../test/format3.json
+python df2json.py -t ../testdata/test.csv -f ../test/format3.json
 '''
 
 def main(): 
@@ -24,12 +24,12 @@ def main():
     functions = generate_functions(format.get('functions',[]))
 
     df = pd.read_csv(args.table)
-    df = apply_transforms(df, functions, format.get('col_transforms',[]))
+    df = apply_transforms(df, functions, format.get('column_transforms',[]))
 
     mapping = format.get('mapping')
 
-    
-    jb = JsonBuilder.Node(mapping, df, functions)
+
+    jb = JsonBuilder(mapping, df, functions)
 
     name, value = jb.build()
     
@@ -70,5 +70,3 @@ def apply_transforms(df, functions, column_transforms):
 
 if __name__ == '__main__':
     main()
-
-    

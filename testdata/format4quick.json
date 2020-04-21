@@ -3,17 +3,17 @@
     "type": "object",
     "children": [
       {
-        "type": "prim_array",
+        "type": "array",
         "value_col": "name",
         "name": "name"
       },
       {
-        "type": "prim_array",
+        "type": "array",
         "value_col": "discount_factor",
         "name": "discount_factor"
       },
       {
-        "type": "prim_array",
+        "type": "array",
         "value_col": "date",
         "name": "date"
       }
