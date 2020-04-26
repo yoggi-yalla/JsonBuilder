@@ -9,13 +9,13 @@ class JsonBuilder:
         self.name = kwargs.get('name')
         self.multiple = kwargs.get('multiple')
 
-        self.func_raw = kwargs.get('func', 'None')
-        self.filter_raw = kwargs.get('filter', 'None')
-        self.group_by_raw = kwargs.get('group_by', 'None')
+        self.func_raw = kwargs.get('func')
+        self.filter_raw = kwargs.get('filter')
+        self.group_by_raw = kwargs.get('group_by')
 
-        self.func = eval(self.func_raw)
-        self.filter = eval(self.filter_raw)
-        self.group_by = eval(self.group_by_raw)
+        self.func = eval("lambda x,r,df:"+self.func_raw) if self.func_raw else None
+        self.filter = eval("lambda df:"+self.filter_raw) if self.filter_raw else None
+        self.group_by = eval("lambda df:"+self.group_by_raw) if self.group_by_raw else None
 
         self.df = None
         self.row = None
@@ -51,7 +51,7 @@ class JsonBuilder:
 
     def _next_scope(self):
         self._apply_filter()
-        if self.multiple:
+        if self.multiple or self.group_by:
             if self.group_by:
                 for group in self.df.groupby(self.group_by(self.df), sort=False):
                     self.df = group[1]
@@ -100,7 +100,6 @@ class JsonBuilder:
         self._apply_filter()
         if self.df is not None:
             self.row = next(self.df.itertuples())
-        print("DataFrame after loading: \n {} \n".format(self.df))
         return self
 
     def add_functions(self, functions):
@@ -115,9 +114,8 @@ class JsonBuilder:
     def apply_transforms(self, df_transforms):
         if df_transforms:
             for transform in df_transforms:
-                f = eval(transform)
+                f = eval("lambda df:"+transform)
                 col = f(self.df)
                 name = col.name
                 self.df[name] = col
-            print("DataFrame after transforms: \n {} \n".format(self.df))
         return self

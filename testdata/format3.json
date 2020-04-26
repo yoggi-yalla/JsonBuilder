@@ -6,8 +6,8 @@
     "def f4(df): return df.fillna(0)"
   ],
   "df_transforms": [
-    "lambda df: df['discount_factor']/3",
-    "lambda df: (df['discount_factor']*6).rename('new_col')"
+    "df['discount_factor']/3",
+    "(df['discount_factor']*6).rename('new_col')"
   ],
   "mapping": {
     "type": "array",
@@ -15,8 +15,8 @@
       {
         "type": "object",
         "multiple": true,
-        "func": "lambda x,r,df: f3(x,r,df)",
-        "group_by": "lambda df: df['name']",
+        "func": "f3(x,r,df)",
+        "group_by": "df['name']",
         "children": [
           {
             "name": "action",
@@ -47,7 +47,7 @@
                           },
                           {
                             "value_col": "discount_factor",
-                            "func": "lambda x,r,df: 1/x",
+                            "func": "1/x",
                             "name": "df"
                           }
                         ]
@@ -60,7 +60,6 @@
                   },
                   {
                     "name": "identifier",
-                    "func": "lambda x,r,df: x",
                     "value_col": "name"
                   }
                 ]

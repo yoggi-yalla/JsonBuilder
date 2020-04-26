@@ -1,0 +1,19 @@
+{
+  "mapping": {
+    "type": "object",
+    "children": [
+      {
+        "name": "name",
+        "func": "df['name'].tolist()"
+      },
+      {
+        "name": "discount_factor",
+        "func": "df['discount_factor'].tolist()"
+      },
+      {
+        "name": "date",
+        "func": "df['date'].tolist()"
+      }
+    ]
+  }
+}
