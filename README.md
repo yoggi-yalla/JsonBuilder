@@ -182,7 +182,7 @@ transforms = [
   "lambda df: (df['currency1'] + df['currency2']).rename('currency_pair')",
 
   # User defined functions can be used here as well, 
-  # as long as they have been loaded first!
+  # as long as they have been added using add_function first!
   "lambda df: f4(df)"
 ]
 ```
@@ -195,3 +195,4 @@ column = f(df)
 name = column.name
 df[name] = column
 ```
+If only one column is used in the transform then the output Series will have the same name as this column, and the result is that the corresponding column in the DataFrame is overwritten with the output Series. If more than one column is used, the resulting Series will have ``name == None``. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. Renaming can also be useful if one wants to transform a single column, but save the transformed column in a _new_ column.
