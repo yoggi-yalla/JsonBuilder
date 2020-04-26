@@ -1,19 +1,29 @@
 # table2json
-This is a tool for converting Pandas DataFrames to a structured JSON format.
+This is a tool for converting .csv data to a structured JSON format. The tool is built on top of Pandas so it requires the user to have pandas installed (pip -install pandas).
 
 
 ## Example usage:
 ```Python
 from JsonBuilder import JsonBuilder
-import pandas as pd
+import json
+
+csv = 'path/to/some/csv/file.csv' # can also be str or file-like object  
 mapping = {TODO}
-df = pd.DataFrame()
-functions = {'melt', pd.melt}
-name, value = JsonBuilder(mapping, df, functions=functions).build()
+functions = [TODO]
+transforms = [TODO]
+
+output_native = JsonBuilder().parse_mapping(mapping)
+                             .load_csv(csv)
+                             .add_functions(functions)
+                             .apply_transforms(transforms)
+                             .build()
+                             .value
+
+output_json = json.dumps(output_native, indent=2)
 ```
 
 ## Mapping
-The mapping is a Python dict describing the shape of the desired output JSON, and instructions for how to build it based on the date from the DataFrame. The mapping consists of JSON objects, and each object can have the following attributes:
+The mapping is a Python dict describing the shape of the desired output JSON, and instructions for how to build it based on the data in the csv. The mapping consists of JSON nodes, and each node can have the following attributes:
   
 - type  
 - name  
@@ -26,7 +36,7 @@ The mapping is a Python dict describing the shape of the desired output JSON, an
 - filter  
 - func  
   
-type is either 'object', 'array' or 'primitive'  
+type is either 'object', 'array' or 'primitive' (default)
   
 an object is parent to nodes with names  
 an array is parent to nodes without names  
@@ -36,13 +46,13 @@ children is a list of all child nodes
   
 each child to an object must have a name  
 use name_col to fetch name dynamically from a column  
-use name to set a hard coded name  
+use name to set a hard coded name
   
 each primitive has a value (string, float, int, bool, or none)  
 use value_col to fetch value dynamically from a column  
-use value to set a hard coded value  
+use value to set a hard coded value 
   
-'multiple': false	(this is the default value)  
+'multiple': false	(default)  
 means the current scope should build one instances of this node  
   
 'multiple': true  
@@ -54,16 +64,26 @@ filter is used to reduce the scope of the dataframe
 
 func is used to apply a function to a value after it has been created
 
-## DataFrame
-Any valid DataFrame should work with this tool
-DataFrames can easily be built from .csv using:
-```Python
-import pandas as pd
-df = pd.read_csv('path_to_csv.csv')
-```
 
 ## Functions
-Functions are passed as a Dict with <function name, function obj> pairs.
-This allows the user to apply them anywhere in the mapping by setting 
-"func": "<function name>" 
+Functions are passed as a List of functions, represented as strings:
+``` python
+functions = [
+  "def f1(x,r,df): x = 15; x += 2; return x",
+  "def f2(df): df['region']",
+  "def f3(df): df['currency'] == 'SEK'"
+]
+```
+  
+
+This allows the user to apply them anywhere in the mapping: 
+```python
+"func": "lambda x,r,df: f1(x,r,df)"
+"group_by": "lambda df: f2(df)"
+"filter": "lambda df: f3(df)"
+```
 on a node.
+
+In these examples it may be more convenient to use the lambda directly,
+but if the functions are complex or one wants to re-use the same function
+multiple times then this can be useful.
