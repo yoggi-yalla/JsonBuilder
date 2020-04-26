@@ -1,5 +1,5 @@
 # JsonBuilder
-This is a tool for converting .csv data to a structured JSON format. The only requirement for using this tool is to have Pandas installed on your machine.
+This is a tool for converting .csv data to a structured JSON format. It is built on top of Pandas, and as such it requires the user to have  Pandas installed on their machine.
 
 
 ## Example usage:
