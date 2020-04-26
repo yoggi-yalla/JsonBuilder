@@ -1,4 +1,4 @@
-# table2json
+# JsonBuilder
 This is a tool for converting .csv data to a structured JSON format. The tool is built on top of Pandas so it requires the user to have pandas installed (pip -install pandas).
 
 
