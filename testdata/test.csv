@@ -1,5 +1,5 @@
-﻿name,discount_factor,date,name2
-USD_OIS,0.99,2019-05-18,
-USD_OIS,0.95,2020-05-18,
-EUR_OIS,0.99,2019-05-18,
-EUR_OIS,0.95,2020-05-18,
+﻿name,discount_factor,date,name2,abc
+USD_OIS,0.99,2019-05-18,,5
+USD_OIS,0.95,2020-05-18,,5
+EUR_OIS,0.99,2019-05-18,,abc
+EUR_OIS,0.95,2020-05-18,,4

@@ -10,67 +10,51 @@
         "multiple": true,
         "children": [
           {
-            "name": "valuation_date",
             "value_col": "valuation_date"
           },
           {
-            "name": "party_id",
             "value_col": "party_id"
           },
           {
-            "name": "counterparty_id",
             "value_col": "counterparty_id"
           },
           {
-            "name": "portfolio_id",
             "value_col": "portfolio_id"
           },
           {
-            "name": "product_class",
             "value_col": "product_class"
           },
           {
-            "name": "risk_type",
             "value_col": "risk_type"
           },
           {
-            "name": "qualifier",
             "value_col": "qualifier"
           },
           {
-            "name": "bucket",
             "value_col": "bucket"
           },
           {
-            "name": "label1",
             "value_col": "label1"
           },
           {
-            "name": "label2",
             "value_col": "label2"
           },
           {
-            "name": "amount",
             "value_col": "amount"
           },
           {
-            "name": "amount_currency",
             "value_col": "amount_currency"
           },
           {
-            "name": "post_regulations",
             "value_col": "post_regulations"
           },
           {
-            "name": "collect_regulations",
             "value_col": "collect_regulations"
           },
           {
-            "name": "im_model",
             "value_col": "im_model"
           },
           {
-            "name": "end_date",
             "value_col": "end_date"
           }
         ]
