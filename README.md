@@ -70,8 +70,8 @@ Functions are passed as a List of functions, represented as strings:
 ``` python
 functions = [
   "def f1(x,r,df): x = 15; x += 2; return x",
-  "def f2(df): df['region']",
-  "def f3(df): df['currency'] == 'SEK'"
+  "def f2(df): return df['region']",
+  "def f3(df): return df['currency'] == 'SEK'"
 ]
 ```
   
