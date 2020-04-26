@@ -1,16 +1,16 @@
 # JsonBuilder
-This is a tool for converting .csv data to a structured JSON format. It is built on top of Pandas, and as such it requires the user to have  Pandas installed on their machine.
+JsonBuilder is a tool for converting .csv data to a structured JSON format. It is built on top of Pandas, and as such it requires the user to have  Pandas installed on their machine.
 
 
-## Example usage:
+## Example usage
 ```Python
 from JsonBuilder import JsonBuilder
 import json
 
 csv = 'path/to/some/csv/file.csv' # can also be str or file-like object  
-mapping = {TODO}
-functions = [TODO]
-transforms = [TODO]
+mapping = {TODO} # see below for examples
+functions = [TODO] # see below for examples
+transforms = [TODO] # see below for examples
 
 output_native = JsonBuilder().parse_mapping(mapping)
                              .load_csv(csv)
@@ -21,57 +21,141 @@ output_native = JsonBuilder().parse_mapping(mapping)
 
 output_json = json.dumps(output_native, indent=2)
 ```
+<br>
+
+## Intro
+Consider a simple .csv file with EURSEK fixing data:
+
+|currency1|currency2|fixing |date      |
+|---------|---------|-------|----------|
+|EUR      |SEK      |10.8623|2020-04-20|
+|EUR      |SEK      |10.9543|2020-04-21|
+|EUR      |SEK      |10.9423|2020-04-22|
+|EUR      |SEK      |10.8883|2020-04-23|
+|EUR      |SEK      |10.8723|2020-04-24|
+
+There are many ways of expressing this data in JSON format:
+
+````python
+# One example:
+[
+  {
+    "currency1": "EUR",
+    "currency2": "SEK",
+    "fixing": 10.8623,
+    "fixing_date": "2020-04-20"
+  },
+  {
+    "currency1": "EUR",
+    "currency2": "SEK",
+    "fixing": 10.9543,
+    "fixing_date": "2020-04-21"
+  },
+  ...
+]
+
+# Another example:
+{
+  "EURSEK": {
+    "dates":[
+      "2020-04-20",
+      "2020-04-21",
+      ...
+    ],
+    "fixings":[
+      10.8623,
+      10.9543,
+      ...
+    ]
+  }
+
+}
+````
+
+Even in a simple scenario like this there are virtually endless ways of converting the .csv into JSON format. If you have an application that consumes JSON data in a certain format, and you receive data in a flat .csv structure, then this tool together with a mapping allows you to specify dynamically how to convert the csv to the desired JSON format that can be consumed by your application. 
+
+<br>
 
 ## Mapping
-The mapping is a Python dict describing the shape of the desired output JSON, and instructions for how to build it based on the data in the csv. The mapping consists of JSON nodes, and each node can have the following attributes:
-  
-- type  
-- name  
-- name_col  
-- value  
-- value_col  
-- children  
-- multiple  
-- group_by  
-- filter  
-- func  
-  
-type is either 'object', 'array' or 'primitive' (default)
-  
-an object is parent to nodes with names  
-an array is parent to nodes without names  
-a primitive can not be parent to further nodes  
-  
-children is a list of all child nodes  
-  
-each child to an object must have a name  
-use name_col to fetch name dynamically from a column  
-use name to set a hard coded name
-  
-each primitive has a value (string, float, int, bool, or none)  
-use value_col to fetch value dynamically from a column  
-use value to set a hard coded value 
-  
-'multiple': false	(default)  
-means the current scope should build one instances of this node  
-  
-'multiple': true  
-means the current scope should build several instances of this node  
-the default behaviour is to build one instance for each row in the scope  
-but if group_by is present then each _group_ of the scope builds one node  
-  
-filter is used to reduce the scope of the dataframe
+The mapping is in itself a JSON, describing the shape of the desired output JSON. The mapping can be considered a tree of JSON nodes, where each node can have the following attributes:
 
-func is used to apply a function to a value after it has been created
+|Attribute|Description|
+|-------------:|-----------|
+|``"type"``          |(str) Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
+|``"name_col"``      |(str) The column containing the _name_ to be fetched|
+|``"name"``          |(str) Can be used for setting a default name|
+|``"value_col"``     |(str) The column containing the _value_ to be fetched|
+|``"value"``         |(str) Can be used for setting a default value|
+|``"children"``      |(array) An array of all child nodes|
+|``"multiple"``      |(bool) If set to ``true`` it means the JsonBuilder should build more than one instance of this node, defaults to ``false``|
+|``"group_by"``      |(lambda string) Groups the DataFrame according to a pandas group_by condition, e.g. <nobr>``"lambda df: df['some_column_name']"``.</nobr> This is only used if multiple is set to ``true``. Let ``f`` denote the lambda expression, then the DataFrame is grouped according to ``df.group_by(f(df))``. |
+|``"filter"``        |(lambda string) Applies a filter to the DataFrame, e.g. <nobr>``lambda df: df['currency1'] == "EUR" & df['currency2'] == "SEK"``.</nobr><br>  Let ``f`` denote the lambda expression, then the DataFrame is filtered according to <nobr>``df = df[f(df)]``</nobr>|
+|``"func"``          |(lambda string) Applies a function to the value that was created by this node, e.g. <nobr>``lambda x,r,df: x if r['date']>"2020-04-03" else None``</nobr><br> Let ``f`` denote the lambda expression, then the function will be applied according to <nobr>``x = f(x,r,df)``,</nobr> where ``x`` is the value generated by this node, ``r`` is the current row being processed by the JsonBuilder, and ``df`` is the current scope of the DataFrame being processed by the JsonBuilder.|
 
+<br>
+
+### Example mapping:
+```python
+mapping = \
+{
+  "type": "object",
+  "children":[
+    {
+      "type":"array",
+      "name":"fixings",
+      "children":[
+        {
+          "type":"object",
+          "multiple":"true",
+          "children":[
+            {
+              "name":"fixing",
+              "value_col": "fixing"
+            },
+            {
+              "name":"currency_pair",
+              "func":"lambda x,r,df: r['currency1']+r['currency2]"
+            },
+            {
+              "name":"fixing_date",
+              "value_col":"date"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+### Which would generate a JSON with this shape:
+```python
+{
+  "fixings":[
+    {
+      "currency_pair": "EURSEK",
+      "fixing": 10.8623,
+      "fixing_date": "2020-04-20"
+    },
+    {
+      "currency_pair": "EURSEK",
+      "fixing": 10.9543,
+      "fixing_date": "2020-04-21"
+    },
+    ...
+  ]
+}
+```
+
+<br>
 
 ## Functions
-Functions are passed as a List of functions, represented as strings:
+Functions are passed as a list of defined functions, represented as strings:
 ``` python
 functions = [
   "def f1(x,r,df): x = 15; x += 2; return x",
   "def f2(df): return df['region']",
-  "def f3(df): return df['currency'] == 'SEK'"
+  "def f3(df): return df['currency'] == 'SEK'",
+  "def f4(df): return df['currency_pain'].lower()"
 ]
 ```
   
@@ -82,8 +166,33 @@ This allows the user to apply them anywhere in the mapping:
 "group_by": "lambda df: f2(df)"
 "filter": "lambda df: f3(df)"
 ```
-on a node.
 
 In these examples it may be more convenient to use the lambda directly,
-but if the functions are complex or one wants to re-use the same function
-multiple times then this can be useful.
+but if the functions are complex, or if one wants to re-use the same function multiple times then this can be useful.
+
+<br>
+
+## Transforms
+Transforms are passed as a list of anonymous functions, represented as strings:
+```python
+transforms = [
+  # Converts the fixings to Swedish Öre
+  "lambda df: df['fixing']*100",
+
+  # Creates a new column called 'currency_pair'
+  "lambda df: (df['currency1'] + df['currency2']).rename('currency_pair')",
+
+  # User defined functions can be used here as well, 
+  # as long as they have been loaded first!
+  "lambda df: f4(df)"
+]
+```
+Let ``f`` denote the lambda expression, the transforms are then applied according to:
+```python
+column = f(df)
+name = column.name
+df[name] = column
+```
+The input to a transform is a DataFrame, and the expected output is a Series object, i.e. a column. This is intended to be used for column-wise transforms of the data before the mapping. 
+
+
