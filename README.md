@@ -82,14 +82,14 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |Attribute|Description|
 |-------------:|-----------|
 |``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
-|``"value_col"``     | The header of the column containing the _value_ to be fetched|
-|``"name_col"``      | The header of the column containing the _name_ to be fetched |
+|``"value_col"``     | The column containing the value to be fetched|
+|``"name_col"``      | The column containing the name to be fetched |
 |``"value"``         | Can be used for setting a default value|
 |``"name"``          | Can be used for setting a default name|
-|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. On the flipside, any child of an ``"array"`` has no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
+|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, all children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.<br>  Let ``s`` denote the raw string, the DataFrame is filtered according to ``df=df[eval(s)]``.|
 |``"split"``      | Splits the DataFrame into groups accoding to a Pandas group_by expression, for example: <br>``"df['some_column_name'].str[:3]"``.<br> Let ``s`` denote the raw string, the DataFrame is split into groups according to ``df.group_by(eval(s))``. A simple ``"r"`` splits the DataFrame into rows.|
-|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it kind of is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
+|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
 
 <br>
 
@@ -148,7 +148,7 @@ mapping = \
 <br>
 
 ## Functions
-Functions are used to define functions that can be re-used in more than one place in the mapping. They are passed as a list of named functions, represented as strings:
+Functions are used to define functions that can be re-used in more than one place in the mapping (or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
 ``` python
 functions = [
   "def f1(x,r,df): x = 15; x += 2; return x",
