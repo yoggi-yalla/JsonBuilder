@@ -14,8 +14,8 @@ transforms = [TODO] # see below for examples
 
 output_native = JsonBuilder().parse_mapping(mapping)
                              .load_csv(csv)
-                             .add_functions(functions)
-                             .apply_transforms(transforms)
+                             .add_functions(functions) # optional
+                             .apply_transforms(transforms) # optional
                              .build()
                              .value
 
