@@ -7,7 +7,7 @@
         "name": "name",
         "children": [
           {
-            "multiple": true,
+            "split": "r",
             "value_col": "name"
           }
         ]
@@ -17,7 +17,7 @@
         "name": "discount_factor",
         "children": [
           {
-            "multiple": true,
+            "split": "r",
             "value_col": "discount_factor"
           }
         ]
@@ -27,7 +27,7 @@
         "name": "date",
         "children": [
           {
-            "multiple": true,
+            "split": "r",
             "value_col": "date"
           }
         ]

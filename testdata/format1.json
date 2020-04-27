@@ -4,7 +4,7 @@
     "children": [
       {
         "type": "object",
-        "multiple": true,
+        "split": "r",
         "children": [
           {
             "name": "name",

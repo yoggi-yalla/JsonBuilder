@@ -4,15 +4,15 @@
     "children": [
       {
         "name": "name",
-        "func": "df['name'].tolist()"
+        "transmute": "df['name'].tolist()"
       },
       {
         "name": "discount_factor",
-        "func": "df['discount_factor'].tolist()"
+        "transmute": "df['discount_factor'].tolist()"
       },
       {
         "name": "date",
-        "func": "df['date'].tolist()"
+        "transmute": "df['date'].tolist()"
       }
     ]
   }

@@ -15,8 +15,8 @@
       {
         "type": "object",
         "multiple": true,
-        "func": "f3(x,r,df)",
-        "group_by": "df['name']",
+        "transmute": "f3(x,r,df)",
+        "split": "df['name']",
         "children": [
           {
             "name": "action",
@@ -39,7 +39,7 @@
                     "children": [
                       {
                         "type": "object",
-                        "multiple": true,
+                        "split": "r",
                         "children": [
                           {
                             "value_col": "date",
@@ -47,7 +47,7 @@
                           },
                           {
                             "value_col": "discount_factor",
-                            "func": "1/x",
+                            "transmute": "1/x",
                             "name": "df"
                           }
                         ]

@@ -9,13 +9,13 @@ class JsonBuilder:
         self.name = kwargs.get('name')
         self.multiple = kwargs.get('multiple')
 
-        self.func_raw = kwargs.get('func')
         self.filter_raw = kwargs.get('filter')
-        self.group_by_raw = kwargs.get('group_by')
+        self.split_raw = kwargs.get('split')
+        self.transmute_raw = kwargs.get('transmute')
 
-        self.func = eval("lambda x,r,df:"+self.func_raw) if self.func_raw else None
         self.filter = eval("lambda df:"+self.filter_raw) if self.filter_raw else None
-        self.group_by = eval("lambda df:"+self.group_by_raw) if self.group_by_raw else None
+        self.split = eval("lambda r,df:"+self.split_raw) if self.split_raw else None
+        self.transmute = eval("lambda x,r,df:"+self.transmute_raw) if self.transmute_raw else None
 
         self.df = None
         self.row = None
@@ -30,7 +30,7 @@ class JsonBuilder:
         else:
             self._fetch_value()
         self._fetch_name()
-        self._apply_func()
+        self._transmute()
         return self
 
     def _build_object(self):
@@ -51,15 +51,17 @@ class JsonBuilder:
 
     def _next_scope(self):
         self._apply_filter()
-        if self.multiple or self.group_by:
-            if self.group_by:
-                for group in self.df.groupby(self.group_by(self.df), sort=False):
-                    self.df = group[1]
-                    self.row = next(group[1].itertuples())
-                    yield
-            else:
+        if self.split:
+            _ = "r"
+            cond = self.split( _ , self.df)
+            if isinstance(cond, str) and cond == "r":
                 for row in self.df.itertuples():
                     self.row = row
+                    yield
+            else:
+                for group in self.df.groupby(cond, sort=False):
+                    self.df = group[1]
+                    self.row = next(group[1].itertuples())
                     yield
         else:
             yield
@@ -82,9 +84,9 @@ class JsonBuilder:
             else:
                 self.row = None
 
-    def _apply_func(self):
-        if self.func:
-            self.value = self.func(self.value, self.row, self.df)
+    def _transmute(self):
+        if self.transmute:
+            self.value = self.transmute(self.value, self.row, self.df)
 
 
     def parse_mapping(self, mapping):

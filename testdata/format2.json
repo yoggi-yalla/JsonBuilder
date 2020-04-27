@@ -5,11 +5,10 @@
       {
         "type": "object",
         "name_col": "name",
-        "multiple": true,
-        "group_by": "df['name']",
+        "split": "df['name']",
         "children": [
           {
-            "multiple": true,
+            "split": "r",
             "name_col": "date",
             "value_col": "discount_factor"
           }
