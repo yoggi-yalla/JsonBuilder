@@ -77,7 +77,7 @@ Even in this simple scenario there are virtually endless ways of converting the 
 <br>
 
 ## Mapping
-The mapping is in itself a JSON object, describing the shape of the desired output JSON. The mapping is best described as a tree of nodes, where each node can have the following attributes:
+The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The mapping is best described as a tree of nodes, where each node can have the following attributes:
 
 |Attribute|Description|
 |-------------:|-----------|
