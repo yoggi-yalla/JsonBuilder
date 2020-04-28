@@ -85,8 +85,8 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |``"name_col"``      | The name of a column containing the name to be fetched|
 |``"value"``         | May be used for setting a default value|
 |``"name"``          | May be used for setting a default name|
-|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, the children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
-|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.|
+|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, the children of an ``"array"`` have no names, and any provided name will be ignored. ``"primitive"`` nodes have no children.|
+|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"(df['currency1'] == 'EUR') & (df['currency2'] == 'SEK')"``.|
 |``"split"``      | Splits the DataFrame into groups of similar elements, for example: <br> ``"df['some_column_name']"``. <br> It's also possible to split by a subset of a a column, like this: <br>``"df['some_column_name'].str[:3]"``. <br> The string should evaluate to a Series object, i.e. a column, upon which the grouping is applied. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
 |``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
 
@@ -147,7 +147,7 @@ mapping = \
 <br>
 
 ## Functions
-This tool allows the user to define functions that can be re-used in more than one place in the mapping or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
+JsonBuilder allows the user to define functions that can be re-used in more than one place in the mapping or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
 ``` python
 functions = [
   "def f1(x,r,df): x = 15; x += 2; return x",
