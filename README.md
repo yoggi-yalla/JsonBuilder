@@ -87,8 +87,8 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |``"value"``         | Can be used for setting a default value|
 |``"name"``          | Can be used for setting a default name|
 |``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, all children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
-|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.<br>  Let ``s`` denote the raw string, the DataFrame is filtered according to ``df=df[eval(s)]``.|
-|``"split"``      | Splits the DataFrame into groups accoding to a Pandas group_by expression, for example: <br>``"df['some_column_name'].str[:3]"``.<br> Let ``s`` denote the raw string, the DataFrame is split into groups according to ``df.group_by(eval(s))``. A simple ``"r"`` splits the DataFrame into rows.|
+|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.|
+|``"split"``      | Splits the DataFrame into groups of similar elements in a column, for example: <br> ``"df['some_column_name'].str[:3]"``. This would split the DataFrame into groups where the first three letters of ``'some_column_name'`` are the same. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
 |``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
 
 <br>
@@ -162,7 +162,7 @@ functions = [
 The functions can later be used in the mapping like this: 
 ```python
 "transmute": "f1(x,r,df)"
-"group_by": "f2(df)"
+"split": "f2(df)"
 "filter": "f3(df)"
 ```
 
@@ -188,13 +188,7 @@ transforms = [
 
 The expression is expected to evaluate to a Pandas Series object, i.e. a column. The JsonBuilder will attach the generated column to the DataFrame.
 
-Let ``s`` denote the expression, the transforms are applied according to:
-```python
-column = eval(s)
-name = column.name
-df[name] = column
-```
-If only one column is used in the transform then the output Series will have the same name as this column, which means the corresponding column in the DataFrame will be overwritten with the output Series. 
+If only one column is used in the transform then the output Series will have the same name as the input column, which means the corresponding column in the DataFrame will be _overwritten_ with the output Series. 
 
 If more than one column is used, the resulting Series will have ``name == None``. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. 
 
