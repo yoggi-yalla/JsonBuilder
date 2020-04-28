@@ -14,7 +14,7 @@ class JsonBuilder:
         self.transmute_raw = kwargs.get('transmute')
 
         self.filter = eval("lambda df:"+self.filter_raw) if self.filter_raw else None
-        self.split = eval("lambda r,df:"+self.split_raw) if self.split_raw else None
+        self.split = eval("lambda df:"+self.split_raw) if self.split_raw else None
         self.transmute = eval("lambda x,r,df:"+self.transmute_raw) if self.transmute_raw else None
 
         self.df = None
@@ -52,14 +52,12 @@ class JsonBuilder:
     def _next_scope(self):
         self._apply_filter()
         if self.split:
-            _ = "r"
-            cond = self.split( _ , self.df)
-            if isinstance(cond, str) and cond == "r":
+            if self.split(self.df).is_unique:
                 for row in self.df.itertuples():
                     self.row = row
                     yield
             else:
-                for group in self.df.groupby(cond, sort=False):
+                for group in self.df.groupby(self.split(self.df), sort=False):
                     self.df = group[1]
                     self.row = next(group[1].itertuples())
                     yield

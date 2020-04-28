@@ -68,11 +68,12 @@ There are many ways of expressing this data in JSON format:
       ...
     ]
   }
-
 }
 ````
 
 Even in this simple scenario there are virtually endless ways of converting the .csv into JSON format, some more sensible than others of course. If you have an application that consumes JSON data in a certain format, and you receive data in a flat .csv format, then this tool allows you to easily convert the .csv data to the specific JSON format that can be consumed by your application.
+
+Jus a quick sidenote: the tool is designed to be as simple as possible to run as a command line tool from a fully serialized state. If one wants to embed this tool into an application it may be worth considering some changes to the interface, to avoid unnecessary string representations of expressions.
 
 <br>
 
@@ -84,11 +85,11 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
 |``"value_col"``     | The column containing the value to be fetched|
 |``"name_col"``      | The column containing the name to be fetched |
-|``"value"``         | Can be used for setting a default value|
-|``"name"``          | Can be used for setting a default name|
-|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, all children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
+|``"value"``         | May be used for setting a default value|
+|``"name"``          | May be used for setting a default name|
+|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, the children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.|
-|``"split"``      | Splits the DataFrame into groups of similar elements in a column, for example: <br> ``"df['some_column_name'].str[:3]"``. This would split the DataFrame into groups where the first three letters of ``'some_column_name'`` are the same. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
+|``"split"``      | Splits the DataFrame into groups of similar elements, for example: <br> ``"df['some_column_name']"``. <br> It's also possible to split by a subset of a a column, like this: <br>``"df['some_column_name'].str[:3]"``. <br> The string should evaluate to a Series object, i.e. a column, upon which the grouping is applied. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
 |``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
 
 <br>
@@ -105,7 +106,7 @@ mapping = \
       "children":[
         {
           "type":"object",
-          "split":"r",
+          "split":"df.index",
           "children":[
             {
               "name":"fixing",
@@ -148,7 +149,7 @@ mapping = \
 <br>
 
 ## Functions
-Functions are used to define functions that can be re-used in more than one place in the mapping (or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
+This tool allows the user to define functions that can be re-used in more than one place in the mapping or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
 ``` python
 functions = [
   "def f1(x,r,df): x = 15; x += 2; return x",
@@ -181,7 +182,7 @@ transforms = [
   "(df['currency1'] + df['currency2']).rename('currency_pair')",
 
   # User defined functions can be used here as well, 
-  # as long as they have been added using add_function first!
+  # as long as they have been added using add_functions first!
   "f4(df)"
 ]
 ```
@@ -190,6 +191,6 @@ The expression is expected to evaluate to a Pandas Series object, i.e. a column.
 
 If only one column is used in the transform then the output Series will have the same name as the input column, which means the corresponding column in the DataFrame will be _overwritten_ with the output Series. 
 
-If more than one column is used, the resulting Series will have ``name == None``. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. 
+If more than one column is used, the resulting Series will have an empty name. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. 
 
 Renaming can also be useful if one wants to transform a single column, but save the output into a _new_ column.

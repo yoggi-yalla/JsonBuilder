@@ -8,7 +8,7 @@
         "split": "df['name']",
         "children": [
           {
-            "split": "r",
+            "split": "df.index",
             "name_col": "date",
             "value_col": "discount_factor"
           }

@@ -7,7 +7,7 @@
     "children": [
       {
         "type": "object",
-        "split": "r",
+        "split": "df.index",
         "children": [
           {
             "value_col": "valuation_date"

@@ -14,7 +14,6 @@
     "children": [
       {
         "type": "object",
-        "multiple": true,
         "transmute": "f3(x,r,df)",
         "split": "df['name']",
         "children": [
@@ -39,7 +38,7 @@
                     "children": [
                       {
                         "type": "object",
-                        "split": "r",
+                        "split": "df.index",
                         "children": [
                           {
                             "value_col": "date",
