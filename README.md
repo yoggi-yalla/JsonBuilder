@@ -73,8 +73,6 @@ There are many ways of expressing this data in JSON format:
 
 Even in this simple scenario there are virtually endless ways of converting the .csv into JSON format, some more sensible than others of course. If you have an application that consumes JSON data in a certain format, and you receive data in a flat .csv format, then this tool allows you to easily convert the .csv data to the specific JSON format that can be consumed by your application.
 
-Jus a quick sidenote: the tool is designed to be as simple as possible to run as a command line tool from a fully serialized state. If one wants to embed this tool into an application it may be worth considering some changes to the interface, to avoid unnecessary string representations of expressions.
-
 <br>
 
 ## Mapping
@@ -83,13 +81,13 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |Attribute|Description|
 |-------------:|-----------|
 |``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
-|``"value_col"``     | The column containing the value to be fetched|
-|``"name_col"``      | The column containing the name to be fetched |
+|``"value_col"``     | The name of a column containing the value to be fetched|
+|``"name_col"``      | The name of a column containing the name to be fetched|
 |``"value"``         | May be used for setting a default value|
 |``"name"``          | May be used for setting a default name|
 |``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, the children of an ``"array"`` have no name, any provided name will be ignored. ``"primitive"`` nodes have no children.|
-|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``.|
-|``"split"``      | Splits the DataFrame into groups of similar elements, for example: <br> ``"df['some_column_name']"``. <br> It's also possible to split by a subset of a a column, like this: <br>``"df['some_column_name'].str[:3]"``. <br> The string should evaluate to a Series object, i.e. a column, upon which the grouping is applied. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
+|``"filter"``        | Selects a subset of the DataFrame by checking for truth values, for example: <br>``"df['currency1'] == 'EUR' & df['currency2'] == 'SEK'"``. <br> Similar to ``WHERE`` in SQL-|
+|``"split"``      | Splits the DataFrame into groups of similar elements, for example: <br> ``"df['some_column_name']"``. <br> It's also possible to split by a subset of a a column, like this: <br>``"df['some_column_name'].str[:3]"``. <br> The string should evaluate to a Series object, i.e. a column, upon which the grouping is applied. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements. <BR> Similar to ``GROUP BY`` in SQL. |
 |``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
 
 <br>
