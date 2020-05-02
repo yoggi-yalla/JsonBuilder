@@ -52,12 +52,13 @@ class JsonBuilder:
     def _next_scope(self):
         self._apply_filter()
         if self.split:
-            if self.split(self.df).is_unique:
+            col = self.split(self.df)
+            if col.is_unique:
                 for row in self.df.itertuples():
                     self.row = row
                     yield
             else:
-                for group in self.df.groupby(self.split(self.df), sort=False):
+                for group in self.df.groupby(col, sort=False):
                     self.df = group[1]
                     self.row = next(group[1].itertuples())
                     yield
@@ -86,36 +87,35 @@ class JsonBuilder:
         if self.transmute:
             self.value = self.transmute(self.value, self.row, self.df)
 
-
-    def parse_mapping(self, mapping):
-        children = mapping.pop('children', [])
-        self = JsonBuilder(**mapping)
-        for c in children:
-            self.children.append(JsonBuilder().parse_mapping(c))
-        return self
-
     def load_csv(self, csv):
         self.df = pd.read_csv(csv)
         self.df.index += 1
         self._apply_filter()
-        if self.df is not None:
+        if len(self.df.index)>0:
             self.row = next(self.df.itertuples())
         return self
 
     def add_functions(self, functions):
-        new_functions = {}
         for f in functions:
             exec(f)
             f_name = f.split('(')[0].split(' ')[1]
-            new_functions[f_name] = eval(f_name)
-        globals().update(new_functions)
+            globals().update({f_name:eval(f_name)})
         return self
     
     def apply_transforms(self, df_transforms):
-        if df_transforms:
-            for transform in df_transforms:
-                f = eval("lambda df:"+transform)
-                col = f(self.df)
-                name = col.name
-                self.df[name] = col
+        for transform in df_transforms:
+            f = eval("lambda df:"+transform)
+            out = f(self.df)
+            if isinstance(out, pd.core.series.Series):
+                name = out.name
+                self.df[name] = out
+            elif isinstance(out, pd.core.frame.DataFrame):
+                self.df = out
         return self
+
+def parse_mapping(mapping):
+    children = mapping.pop('children', [])
+    this = JsonBuilder(**mapping)
+    for c in children:
+        this.children.append(parse_mapping(c))
+    return this

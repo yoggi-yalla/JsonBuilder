@@ -6,18 +6,18 @@ JsonBuilder is a tool for converting .csv data to a structured JSON format. It i
 from JsonBuilder import JsonBuilder
 import json
 
-csv = 'path/to/some/csv/file.csv' # can also be str or file-like object  
+csv = 'path/to/some/csv/file.csv'
 mapping = {TODO} # see below for examples
 functions = [TODO] # see below for examples
 transforms = [TODO] # see below for examples
 
 
-output_native = JsonBuilder().parse_mapping(mapping)
-                             .load_csv(csv)
-                             .add_functions(functions) # optional
-                             .apply_transforms(transforms) # optional
-                             .build()
-                             .value
+output_native = JsonBuilder.parse_mapping(mapping)        \
+                           .load_csv(csv)                 \
+                           .add_functions(functions)      \
+                           .apply_transforms(transforms)  \
+                           .build()                       \
+                           .value
 
 output_json = json.dumps(output_native, indent=2)
 ```

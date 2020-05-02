@@ -1,4 +1,4 @@
-from JsonBuilder import JsonBuilder
+import JsonBuilder
 import argparse
 import time
 import json
@@ -28,12 +28,12 @@ def main():
     transforms = format.get('df_transforms', [])
     mapping = format.get('mapping')
 
-    output_native = JsonBuilder().parse_mapping(mapping)          \
-                                 .add_functions(functions)        \
-                                 .load_csv(args.table)            \
-                                 .apply_transforms(transforms)    \
-                                 .build()                         \
-                                 .value
+    output_native = JsonBuilder.parse_mapping(mapping)          \
+                               .add_functions(functions)        \
+                               .load_csv(args.table)            \
+                               .apply_transforms(transforms)    \
+                               .build()                         \
+                               .value
 
 
     output_binary = orjson.dumps(output_native,
