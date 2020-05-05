@@ -35,7 +35,6 @@ def main():
                                .build()                         \
                                .value
 
-
     output_binary = orjson.dumps(output_native,
                                  option=orjson.OPT_INDENT_2|
                                  orjson.OPT_NON_STR_KEYS,

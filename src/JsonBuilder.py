@@ -1,4 +1,7 @@
 import pandas as pd
+from asteval import Interpreter
+
+aeval = Interpreter()
 
 class JsonBuilder:
     def __init__(self, **kwargs):
@@ -9,13 +12,11 @@ class JsonBuilder:
         self.name = kwargs.get('name')
         self.multiple = kwargs.get('multiple')
 
-        self.filter_raw = kwargs.get('filter')
-        self.split_raw = kwargs.get('split')
-        self.transmute_raw = kwargs.get('transmute')
+        self.filter = kwargs.get('filter')
+        self.split = kwargs.get('split')
+        self.transmute = kwargs.get('transmute')
 
-        self.filter = eval("lambda df:"+self.filter_raw) if self.filter_raw else None
-        self.split = eval("lambda df:"+self.split_raw) if self.split_raw else None
-        self.transmute = eval("lambda x,r,df:"+self.transmute_raw) if self.transmute_raw else None
+        self.transexpr = aeval.parse(self.transmute) if self.transmute else None
 
         self.df = None
         self.row = None
@@ -52,7 +53,7 @@ class JsonBuilder:
     def _next_scope(self):
         self._apply_filter()
         if self.split:
-            col = self.split(self.df)
+            col = self.df.eval(self.split)
             if col.is_unique:
                 for row in self.df.itertuples():
                     self.row = row
@@ -66,18 +67,22 @@ class JsonBuilder:
             yield
     
     def _fetch_value(self):
-        if self.value_col and self.row is not None:
-            self.value = getattr(self.row, self.value_col)
+        if self.value_col:
+            if self.row is not None:
+                self.value = getattr(self.row, self.value_col)
+            else:
+                self.value = None
     
     def _fetch_name(self):
-        if self.name is None and self.name_col is None:
-            self.name = self.value_col
-        elif self.name_col and self.row is not None:
-            self.name = getattr(self.row, self.name_col)
+        if self.name_col:
+            if self.row is not None:
+                self.name = getattr(self.row, self.name_col)
+            else: 
+                self.name = None
 
     def _apply_filter(self):
-        if self.filter and self.df is not None:
-            self.df = self.df[self.filter(self.df)]
+        if self.filter:
+            self.df = self.df.query(self.filter)
             if len(self.df.index)>0:
                 self.row = next(self.df.itertuples())
             else:
@@ -85,32 +90,24 @@ class JsonBuilder:
 
     def _transmute(self):
         if self.transmute:
-            self.value = self.transmute(self.value, self.row, self.df)
+            aeval.symtable['x'] = self.value
+            aeval.symtable['r'] = self.row
+            aeval.symtable['df'] = self.df
+            self.value = aeval.run(self.transexpr)
 
     def load_csv(self, csv):
         self.df = pd.read_csv(csv)
         self.df.index += 1
-        self._apply_filter()
-        if len(self.df.index)>0:
-            self.row = next(self.df.itertuples())
         return self
 
     def add_functions(self, functions):
         for f in functions:
-            exec(f)
-            f_name = f.split('(')[0].split(' ')[1]
-            globals().update({f_name:eval(f_name)})
+            aeval(f)
         return self
     
     def apply_transforms(self, df_transforms):
         for transform in df_transforms:
-            f = eval("lambda df:"+transform)
-            out = f(self.df)
-            if isinstance(out, pd.core.series.Series):
-                name = out.name
-                self.df[name] = out
-            elif isinstance(out, pd.core.frame.DataFrame):
-                self.df = out
+            self.df.eval(transform, inplace=True)
         return self
 
 def parse_mapping(mapping):

@@ -1,21 +1,20 @@
 {
   "functions": [
     "def f1(x,r,df): return 1/x",
-    "def f2(x,r,df): return 4/x",
+    "def f2(x): return 1+4/x",
     "def f3(x,r,df): x['hey'] = 'ho'; return x",
     "def f4(df): return df.fillna(0)"
   ],
   "df_transforms": [
-    "df['discount_factor']/3",
-    "(df['discount_factor']*6).rename('new_col')"
+    "discount_factor = discount_factor/2",
+    "currency = name.str.slice(0,3)"
   ],
   "mapping": {
     "type": "array",
     "children": [
       {
         "type": "object",
-        "transmute": "f3(x,r,df)",
-        "split": "df['name']",
+        "split": "currency",
         "children": [
           {
             "name": "action",
@@ -38,7 +37,7 @@
                     "children": [
                       {
                         "type": "object",
-                        "split": "df.index",
+                        "split": "index",
                         "children": [
                           {
                             "value_col": "date",
@@ -46,7 +45,7 @@
                           },
                           {
                             "value_col": "discount_factor",
-                            "transmute": "1/x",
+                            "transmute": "f2(x)",
                             "name": "df"
                           }
                         ]

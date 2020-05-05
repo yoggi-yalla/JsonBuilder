@@ -5,10 +5,10 @@
       {
         "type": "object",
         "name_col": "name",
-        "split": "df['name']",
+        "split": "name",
         "children": [
           {
-            "split": "df.index",
+            "split": "index",
             "name_col": "date",
             "value_col": "discount_factor"
           }
