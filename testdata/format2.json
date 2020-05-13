@@ -1,16 +1,65 @@
 {
+  "functions": [
+    "def f1(x,r,df): return 1/x",
+    "def f2(x): return 1+4/x",
+    "def f3(x,r,df): x['hey'] = 'ho'; return x",
+    "def f4(df): return df.fillna(0)"
+  ],
+  "df_transforms": [
+  ],
   "mapping": {
-    "type": "object",
+    "type": "array",
     "children": [
       {
         "type": "object",
-        "name_col": "name",
-        "split": "name",
+        "iterate": "name",
         "children": [
           {
-            "split": "index",
-            "name_col": "date",
-            "value_col": "discount_factor"
+            "name": "action",
+            "value": "ADD_IR"
+          },
+          {
+            "name": "currency",
+            "column": "name"
+          },
+          {
+            "type": "array",
+            "name": "ir_curves",
+            "children": [
+              {
+                "type": "object",
+                "children": [
+                  {
+                    "type": "array",
+                    "name": "points",
+                    "children": [
+                      {
+                        "type": "object",
+                        "iterate": "index",
+                        "children": [
+                          {
+                            "column": "date",
+                            "name": "date"
+                          },
+                          {
+                            "column": "discount_factor",
+                            "name": "df"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "type",
+                    "value": "BASE_CURVE"
+                  },
+                  {
+                    "name": "identifier",
+                    "column": "name"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

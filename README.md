@@ -71,28 +71,27 @@ There are many ways of expressing this data in JSON format:
 }
 ````
 
-Even in this simple scenario there are virtually endless ways of converting the .csv into JSON format, some more sensible than others of course. If you have an application that consumes JSON data in a certain format, and you receive data in a flat .csv format, then this tool allows you to easily convert the .csv data to the specific JSON format that can be consumed by your application.
+Even in this simple scenario there are countless ways of converting the .csv into JSON format, some more sensible than others of course. If you have an application that consumes JSON data in a certain format, and you receive data in a flat .csv format, then this tool allows you to easily convert the .csv data to the specific JSON format that can be consumed by your application.
 
 <br>
 
 ## Mapping
-The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The mapping is best described as a tree of nodes, where each node can have the following attributes:
+The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The nomenclature used in this project is similar to the official [JSON documentation](https://www.json.org/json-en.html), so if you are not familiar with it already I suggest you have a look at their webpage. The mapping is best described as a tree of nodes, where each node can have the following attributes:
 
 |Attribute|Description|
 |-------------:|-----------|
-|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
-|``"value_col"``     | The name of a column containing the value to be fetched|
-|``"name_col"``      | The name of a column containing the name to be fetched|
-|``"value"``         | May be used for setting a default value|
-|``"name"``          | May be used for setting a default name|
-|``"children"``      | An array of all child nodes. Any child of an ``"object"`` must have a name, either using ``"name"`` or ``"name_col"``. Conversely, the children of an ``"array"`` have no names, and any provided name will be ignored. ``"primitive"`` nodes have no children.|
-|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"(df['currency1'] == 'EUR') & (df['currency2'] == 'SEK')"``.|
-|``"split"``      | Splits the DataFrame into groups of similar elements, for example: <br> ``"df['some_column_name']"``. <br> It's also possible to split by a subset of a a column, like this: <br>``"df['some_column_name'].str[:3]"``. <br> The string should evaluate to a Series object, i.e. a column, upon which the grouping is applied. To split the DataFrame into individual rows, ``"df.index"`` may be used, or any other column that only contains unique elements.|
-|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](TODO). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](TODO).|
+|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``primitive``|
+|``"name"``      | This is used to set the name of a value within an `object` node |
+|``"value"``     | This is typically left blank but can be used for setting a hardcoded value, must be a valid JSON value |
+|``"column"``         | The column in the DataFrame containing the value to be extracted |
+|``"children"``      | An array of all child nodes. Any child of an ``object`` must have a name. Conversely, the children of an ``array`` have no names, and any provided name will be ignored. ``primitive`` nodes have no children.|
+|``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"currency1 == 'EUR' and currency2 == 'SEK'"``. <br>See [df.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) for more informaiton.|
+|``"iterate"``      |  Should contain a column name. The JsonBuilder will iterate over each unique group in this column and generate one value for each group.  To iterate over all rows, the keyword ``"index"`` may be used, or any column name that only contains unique elements.|
+|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
 
 <br>
 
-### Example mapping:
+### Here's an example mapping:
 ```python
 mapping = \
 {
@@ -104,11 +103,11 @@ mapping = \
       "children":[
         {
           "type":"object",
-          "split":"df.index",
+          "iterate":"index",
           "children":[
             {
               "name":"fixing",
-              "value_col": "fixing"
+              "column": "fixing"
             },
             {
               "name":"currency_pair",
@@ -116,7 +115,7 @@ mapping = \
             },
             {
               "name":"fixing_date",
-              "value_col":"date"
+              "column":"date"
             }
           ]
         }
@@ -147,30 +146,36 @@ mapping = \
 <br>
 
 ## Functions
-JsonBuilder allows the user to define functions that can be re-used in more than one place in the mapping or in the [transforms](TODO). They are passed as a list of named functions, represented as strings:
+JsonBuilder allows the user to define their own functions that can be accessed in the [transforms](#Transforms) and in the [transmutes](#Transmutes). They are passed as a list of named functions, represented as strings:
 ``` python
 functions = [
-  "def f1(x,r,df): x = 15; x += 2; return x",
-  "def f2(df): return df['region']",
-  "def f3(df): return df['currency'] == 'SEK'",
-  "def f4(df): return df['currency_pair'].str.lower()"
+  "def f1(x,r,df): y = len(df.index); x += y; return x",
+  "def f2(df): return df.fillna(0)"
 ]
 ```
   
 
-The functions can later be used in the mapping like this: 
+The functions can later be accessed like this: 
 ```python
-"transmute": "f1(x,r,df)"
-"split": "f2(df)"
-"filter": "f3(df)"
+mapping: {
+  ...
+  "transmute": "f1(x,r,df)"
+  ...
+}
+
+transforms:[
+  ...
+  "f2(df)",
+  ...
+]
 ```
 
-For simple operations it is often more convenient to write an expression directly in the string, but for large/complex functions this functionality is essential.
+For simple operations it is often more convenient to write an expression directly in the string, but for large/complex operations this functionality is essential.
 
 <br>
 
 ## Transforms
-Transforms are used for column-wise transforms of the data before the mapping. They are passed as a list of expressions in a string format:
+Transforms are used for column-wise (or table-wise) transforms of the DataFrame before the mapping. They are passed as a list of expressions in a string format:
 ```python
 transforms = [
   # Converts the fixings to Swedish Öre
@@ -181,7 +186,7 @@ transforms = [
 
   # User defined functions can be used here as well, 
   # as long as they have been added using add_functions first!
-  "f4(df)"
+  "f2(df)"
 ]
 ```
 
@@ -192,3 +197,8 @@ If only one column is used in the transform then the output Series will have the
 If more than one column is used, the resulting Series will have an empty name. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. 
 
 Renaming can also be useful if one wants to transform a single column, but save the output into a _new_ column.
+
+
+## Transmutes
+
+TODO

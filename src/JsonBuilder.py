@@ -6,14 +6,12 @@ aeval = Interpreter()
 class JsonBuilder:
     def __init__(self, **kwargs):
         self.type = kwargs.get('type')
-        self.value_col = kwargs.get('value_col')
-        self.name_col = kwargs.get('name_col')
-        self.value = kwargs.get('value')
         self.name = kwargs.get('name')
-        self.multiple = kwargs.get('multiple')
+        self.value = kwargs.get('value')
+        self.column = kwargs.get('column')
 
         self.filter = kwargs.get('filter')
-        self.split = kwargs.get('split')
+        self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
 
         self.transexpr = aeval.parse(self.transmute) if self.transmute else None
@@ -29,8 +27,7 @@ class JsonBuilder:
         elif self.type == 'array':
             self._build_array()
         else:
-            self._fetch_value()
-        self._fetch_name()
+            self._build_primitive()
         self._transmute()
         return self
 
@@ -38,7 +35,7 @@ class JsonBuilder:
         self.value = {}
         for child in self.children:
             child.df, child.row = self.df, self.row
-            for _ in child._next_scope():
+            for _ in child._iterate():
                 c = child.build()
                 self.value[c.name] = c.value
 
@@ -46,14 +43,18 @@ class JsonBuilder:
         self.value = []
         for child in self.children:
             child.df, child.row = self.df, self.row
-            for _ in child._next_scope():
+            for _ in child._iterate():
                 c = child.build()
                 self.value.append(c.value)
+    
+    def _build_primitive(self):
+        if self.column:
+            self.value = getattr(self.row, self.column) if self.row else None
 
-    def _next_scope(self):
-        self._apply_filter()
-        if self.split:
-            col = self.df.eval(self.split)
+    def _iterate(self):
+        self._filter()
+        if self.iterate:
+            col = self.df.eval(self.iterate)
             if col.is_unique:
                 for row in self.df.itertuples():
                     self.row = row
@@ -65,22 +66,8 @@ class JsonBuilder:
                     yield
         else:
             yield
-    
-    def _fetch_value(self):
-        if self.value_col:
-            if self.row is not None:
-                self.value = getattr(self.row, self.value_col)
-            else:
-                self.value = None
-    
-    def _fetch_name(self):
-        if self.name_col:
-            if self.row is not None:
-                self.name = getattr(self.row, self.name_col)
-            else: 
-                self.name = None
 
-    def _apply_filter(self):
+    def _filter(self):
         if self.filter:
             self.df = self.df.query(self.filter)
             if len(self.df.index)>0:
@@ -106,8 +93,15 @@ class JsonBuilder:
         return self
     
     def apply_transforms(self, df_transforms):
+        print(self.df)
         for transform in df_transforms:
-            self.df.eval(transform, inplace=True)
+            aeval.symtable['df'] = self.df
+            out = aeval(transform)
+            if isinstance(out, pd.core.frame.DataFrame):
+                self.df = out
+            elif isinstance(out, pd.core.series.Series):
+                self.df[out.name] = out
+            print(self.df)
         return self
 
 def parse_mapping(mapping):
@@ -115,4 +109,4 @@ def parse_mapping(mapping):
     this = JsonBuilder(**mapping)
     for c in children:
         this.children.append(parse_mapping(c))
-    return this
+    return this    

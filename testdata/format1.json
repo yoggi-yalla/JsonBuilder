@@ -4,19 +4,19 @@
     "children": [
       {
         "type": "object",
-        "split": "index",
+        "iterate": "index",
         "children": [
           {
             "name": "name",
-            "value_col": "name"
+            "column": "name"
           },
           {
             "name": "discount_factor",
-            "value_col": "discount_factor"
+            "column": "discount_factor"
           },
           {
             "name": "date",
-            "value_col": "date"
+            "column": "date"
           }
         ]
       }

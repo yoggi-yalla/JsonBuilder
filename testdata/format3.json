@@ -1,68 +1,34 @@
 {
-  "functions": [
-    "def f1(x,r,df): return 1/x",
-    "def f2(x): return 1+4/x",
-    "def f3(x,r,df): x['hey'] = 'ho'; return x",
-    "def f4(df): return df.fillna(0)"
-  ],
-  "df_transforms": [
-    "discount_factor = discount_factor/2",
-    "currency = name.str.slice(0,3)"
-  ],
   "mapping": {
-    "type": "array",
+    "type": "object",
     "children": [
       {
-        "type": "object",
-        "split": "currency",
+        "type": "array",
+        "name": "name",
         "children": [
           {
-            "name": "action",
-            "value": "ADD_IR"
-          },
+            "iterate": "index",
+            "column": "name"
+          }
+        ]
+      },
+      {
+        "type": "array",
+        "name": "discount_factor",
+        "children": [
           {
-            "name": "currency",
-            "value_col": "name"
-          },
+            "iterate": "index",
+            "column": "discount_factor"
+          }
+        ]
+      },
+      {
+        "type": "array",
+        "name": "date",
+        "children": [
           {
-            "type": "array",
-            "name": "ir_curves",
-            "children": [
-              {
-                "type": "object",
-                "children": [
-                  {
-                    "type": "array",
-                    "name": "points",
-                    "children": [
-                      {
-                        "type": "object",
-                        "split": "index",
-                        "children": [
-                          {
-                            "value_col": "date",
-                            "name": "date"
-                          },
-                          {
-                            "value_col": "discount_factor",
-                            "transmute": "f2(x)",
-                            "name": "df"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "name": "type",
-                    "value": "BASE_CURVE"
-                  },
-                  {
-                    "name": "identifier",
-                    "value_col": "name"
-                  }
-                ]
-              }
-            ]
+            "iterate": "index",
+            "column": "date"
           }
         ]
       }

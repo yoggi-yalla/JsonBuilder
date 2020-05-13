@@ -1,61 +1,74 @@
 {
-  "functions": [
-    "def f1(x,r,o): return 1/x"
-  ],
   "mapping": {
     "type": "array",
     "children": [
       {
         "type": "object",
-        "split": "df.index",
+        "iterate": "index",
         "children": [
           {
-            "value_col": "valuation_date"
+            "name": "valuation_date",
+            "column": "valuation_date"
           },
           {
-            "value_col": "party_id"
+            "name": "party_id",
+            "column": "party_id"
           },
           {
-            "value_col": "counterparty_id"
+            "name": "counterparty_id",
+            "column": "counterparty_id"
           },
           {
-            "value_col": "portfolio_id"
+            "name": "portfolio_id",
+            "column": "portfolio_id"
           },
           {
-            "value_col": "product_class"
+            "name": "product_class",
+            "column": "product_class"
           },
           {
-            "value_col": "risk_type"
+            "name": "risk_type",
+            "column": "risk_type"
           },
           {
-            "value_col": "qualifier"
+            "name": "qualifier",
+            "column": "qualifier"
           },
           {
-            "value_col": "bucket"
+            "name": "bucket",
+            "column": "bucket"
           },
           {
-            "value_col": "label1"
+            "name": "label1",
+            "column": "label1"
           },
           {
-            "value_col": "label2"
+            "name": "label2",
+            "column": "label2"
           },
           {
-            "value_col": "amount"
+            "name": "amount",
+            "column": "amount"
           },
           {
-            "value_col": "amount_currency"
+            "name": "amount_currency",
+            "column": "amount_currency"
           },
           {
-            "value_col": "post_regulations"
+            "name": "post_regulations",
+            "column": "post_regulations"
           },
           {
-            "value_col": "collect_regulations"
+            "name": "collect_regulations",
+            "column": "collect_regulations"
           },
           {
-            "value_col": "im_model"
+            "name": "im_model",
+            "column": "im_model"
           },
           {
-            "value_col": "end_date"
+            "name": "end_date",
+            "column": "end_date"
           }
         ]
       }
