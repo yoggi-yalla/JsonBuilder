@@ -3,7 +3,7 @@ JsonBuilder is a tool for converting .csv data to a structured JSON format. It i
 
 ## Example usage
 ```Python
-from JsonBuilder import JsonBuilder
+import JsonBuilder
 import json
 
 csv = 'path/to/some/csv/file.csv'
@@ -13,9 +13,9 @@ transforms = [TODO] # see below for examples
 
 
 output_native = JsonBuilder.parse_mapping(mapping)        \
-                           .load_csv(csv)                 \
-                           .add_functions(functions)      \
-                           .apply_transforms(transforms)  \
+                           .load_csv(csv)                 \ 
+                           .add_functions(functions)      \ #optional
+                           .apply_transforms(transforms)  \ #optional
                            .build()                       \
                            .value
 
