@@ -76,7 +76,7 @@ Even in this simple scenario there are countless ways of converting the .csv int
 <br>
 
 ## Mapping
-The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The nomenclature used in this project is similar to the official [JSON documentation](https://www.json.org/json-en.html), so if you are not familiar with it already I suggest you have a look at their webpage. The mapping is best described as a tree of nodes, where each node can have the following attributes:
+The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The nomenclature used in this project is similar to the official JSON documentation, so if you are not familiar with it already I suggest you have a look at their [webpage](https://www.json.org/json-en.html). The mapping is best described as a tree of nodes, where each node can have the following attributes:
 
 |Attribute|Description|
 |-------------:|-----------|
