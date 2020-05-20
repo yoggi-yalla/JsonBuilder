@@ -80,9 +80,9 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 
 |Attribute|Description|
 |-------------:|-----------|
-|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``primitive``|
+|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
 |``"name"``      | The `name` of a `value` within an `object` node |
-|``"value"``     | This is typically left blank but can be used for setting a hardcoded value on `primitive`nodes. <br> May contain any valid JSON value such as ``"some_value"`` or ``0.5`` or ``[true, false]`` or ``{}`` etc.|
+|``"value"``     | This is typically left blank but can be used for setting a hardcoded value on `primitive` nodes. May contain any valid JSON value such as ``"some_value"`` or ``0.5`` or ``[true, false]`` or ``{}`` etc.|
 |``"column"``         | The column in the DataFrame containing the value to be extracted, e.g. ``"some_column_name"`` |
 |``"children"``      | An array of all child nodes. Any child of an ``object`` must have a name. Conversely, the children of an ``array`` have no names, and any provided name will be ignored. ``primitive`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"currency1 == 'EUR' and currency2 == 'SEK'"``. <br>See [df.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) for more informaiton.|
