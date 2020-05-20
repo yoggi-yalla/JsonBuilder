@@ -81,13 +81,13 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |Attribute|Description|
 |-------------:|-----------|
 |``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``primitive``|
-|``"name"``      | The name of a value within an `object` node, e.g. ``"some_name"`` |
-|``"value"``     | This is typically left blank but can be used for setting a hardcoded value. <br> May contain any valid JSON value such as ``"some_value"`` or ``0.5`` or ``[true, false]`` or ``{}`` etc.|
+|``"name"``      | The `name` of a `value` within an `object` node |
+|``"value"``     | This is typically left blank but can be used for setting a hardcoded value on `primitive`nodes. <br> May contain any valid JSON value such as ``"some_value"`` or ``0.5`` or ``[true, false]`` or ``{}`` etc.|
 |``"column"``         | The column in the DataFrame containing the value to be extracted, e.g. ``"some_column_name"`` |
 |``"children"``      | An array of all child nodes. Any child of an ``object`` must have a name. Conversely, the children of an ``array`` have no names, and any provided name will be ignored. ``primitive`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"currency1 == 'EUR' and currency2 == 'SEK'"``. <br>See [df.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) for more informaiton.|
 |``"iterate"``      |  Should contain a column name, e.g. ``"some_other_column_name"``. The JsonBuilder will iterate over each unique group in this column and generate one value for each group. To iterate over all rows, the keyword ``"index"`` may be used, or any column that only contains unique elements.|
-|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
+|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>You can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
 
 <br>
 
