@@ -4,7 +4,7 @@
     "children": [
       {
         "type": "object",
-        "iterate": "index",
+        "iterate": true,
         "children": [
           {
             "name": "valuation_date",

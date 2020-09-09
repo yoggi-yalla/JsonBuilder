@@ -3,14 +3,14 @@ from asteval import Interpreter
 
 aeval = Interpreter()
 
-class JsonBuilder:
+class JsonNode:
     def __init__(self, **kwargs):
-        self.type = kwargs.get('type')
         self.name = kwargs.get('name')
         self.value = kwargs.get('value')
         self.column = kwargs.get('column')
 
         self.filter = kwargs.get('filter')
+        self.group_by = kwargs.get('group_by')
         self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
 
@@ -22,50 +22,22 @@ class JsonBuilder:
         self.children = []
 
     def build(self):
-        if self.type == 'object':
-            self._build_object()
-        elif self.type == 'array':
-            self._build_array()
-        else:
-            self._build_primitive()
+        self._filter()
+        self._build()
         self._transmute()
+        self._validate()
         return self
 
-    def _build_object(self):
-        self.value = {}
-        for child in self.children:
-            child.df, child.row = self.df, self.row
-            for _ in child._iterate():
-                c = child.build()
-                self.value[c.name] = c.value
+    def _build(self):
+        #This is implemented in the subclasses JsonArray, JsonObject, JsonPrimitive
+        pass
 
-    def _build_array(self):
-        self.value = []
-        for child in self.children:
-            child.df, child.row = self.df, self.row
-            for _ in child._iterate():
-                c = child.build()
-                self.value.append(c.value)
-    
-    def _build_primitive(self):
-        if self.column:
-            self.value = getattr(self.row, self.column) if self.row else None
-
-    def _iterate(self):
-        self._filter()
-        if self.iterate:
-            col = self.df.eval(self.iterate)
-            if col.is_unique:
-                for row in self.df.itertuples():
-                    self.row = row
-                    yield
-            else:
-                for group in self.df.groupby(col, sort=False):
-                    self.df = group[1]
-                    self.row = next(group[1].itertuples())
-                    yield
-        else:
-            yield
+    def _validate(self):
+        """
+        This is currently not used, but could be useful if one wants to implement 
+        different validators for different Node types
+        """
+        pass
 
     def _filter(self):
         if self.filter:
@@ -81,6 +53,22 @@ class JsonBuilder:
             aeval.symtable['r'] = self.row
             aeval.symtable['df'] = self.df
             self.value = aeval.run(self.transexpr)
+     
+    def _iterate(self):
+        if self.group_by:
+            col = self.df.eval(self.group_by)
+            for group in self.df.groupby(col, sort=False):
+                self.df = group[1]
+                self.row = next(self.df.itertuples())
+                yield   
+        elif self.iterate:
+            iterator = self.df.itertuples()
+            self.df = None
+            for row in iterator:
+                self.row = row
+                yield   
+        else:
+            yield
 
     def load_csv(self, csv):
         self.df = pd.read_csv(csv)
@@ -104,9 +92,48 @@ class JsonBuilder:
             print(self.df)
         return self
 
+
+class JsonArray(JsonNode):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _build(self):
+        self.value = []    
+        for child in self.children:
+            child.df, child.row = self.df, self.row
+            for _ in child._iterate():
+                c = child.build()
+                self.value.append(c.value)
+
+class JsonObject(JsonNode):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    def _build(self):
+        self.value = {}
+        for child in self.children:
+            child.df, child.row = self.df, self.row
+            for _ in child._iterate():
+                c = child.build()
+                self.value[c.name] = c.value
+
+class JsonPrimitive(JsonNode):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    def _build(self):
+        if self.column:
+            self.value = getattr(self.row, self.column) if self.row else None
+
+
 def parse_mapping(mapping):
     children = mapping.pop('children', [])
-    this = JsonBuilder(**mapping)
+    if mapping.get("type") == "object":
+        this = JsonObject(**mapping)
+    elif mapping.get("type") == "array":
+        this = JsonArray(**mapping)
+    else:
+        this = JsonPrimitive(**mapping)
     for c in children:
         this.children.append(parse_mapping(c))
     return this    

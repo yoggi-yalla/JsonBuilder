@@ -12,7 +12,7 @@
     "children": [
       {
         "type": "object",
-        "iterate": "name",
+        "group_by": "name",
         "children": [
           {
             "name": "action",
@@ -35,7 +35,7 @@
                     "children": [
                       {
                         "type": "object",
-                        "iterate": "index",
+                        "iterate": true,
                         "children": [
                           {
                             "column": "date",
