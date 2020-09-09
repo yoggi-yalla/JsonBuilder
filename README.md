@@ -3,7 +3,7 @@ JsonBuilder is a tool for converting .csv data to a structured JSON format. It i
 
 ## Example usage
 ```Python
-from JsonBuilder import JsonBuilder
+import JsonBuilder
 import json
 
 csv = 'path/to/some/csv/file.csv'
@@ -13,9 +13,9 @@ transforms = [TODO] # see below for examples
 
 
 output_native = JsonBuilder.parse_mapping(mapping)        \
-                           .load_csv(csv)                 \
-                           .add_functions(functions)      \
-                           .apply_transforms(transforms)  \
+                           .load_csv(csv)                 \ 
+                           .add_functions(functions)      \ #optional
+                           .apply_transforms(transforms)  \ #optional
                            .build()                       \
                            .value
 
@@ -76,18 +76,18 @@ Even in this simple scenario there are countless ways of converting the .csv int
 <br>
 
 ## Mapping
-The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The nomenclature used in this project is similar to the official [JSON documentation](https://www.json.org/json-en.html), so if you are not familiar with it already I suggest you have a look at their webpage. The mapping is best described as a tree of nodes, where each node can have the following attributes:
+The mapping is in itself a JSON object, specifying the shape of the desired output JSON. The nomenclature used in this project is similar to the official JSON documentation, so if you are not familiar with it already I suggest you have a look at their [webpage](https://www.json.org/json-en.html). The mapping is best described as a tree of nodes, where each node can have the following attributes:
 
 |Attribute|Description|
 |-------------:|-----------|
-|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``primitive``|
-|``"name"``      | This is used to set the name of a value within an `object` node |
-|``"value"``     | This is typically left blank but can be used for setting a hardcoded value, must be a valid JSON value |
-|``"column"``         | The column in the DataFrame containing the value to be extracted |
+|``"type"``          | Can be ``"object"``, ``"array"``, or ``"primitive"``, defaults to ``"primitive"``|
+|``"name"``      | The `name` of a `value` within an `object` node |
+|``"value"``     | This is typically left blank but can be used for setting a hardcoded value on `primitive` nodes. May contain any valid JSON value such as ``"some_value"`` or ``0.5`` or ``[true, false]`` or ``{}`` etc.|
+|``"column"``         | The column in the DataFrame containing the value to be extracted, e.g. ``"some_column_name"`` |
 |``"children"``      | An array of all child nodes. Any child of an ``object`` must have a name. Conversely, the children of an ``array`` have no names, and any provided name will be ignored. ``primitive`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"currency1 == 'EUR' and currency2 == 'SEK'"``. <br>See [df.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) for more informaiton.|
-|``"iterate"``      |  Should contain a column name. The JsonBuilder will iterate over each unique group in this column and generate one value for each group.  To iterate over all rows, the keyword ``"index"`` may be used, or any column name that only contains unique elements.|
-|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>If it seems magical to you then it's because it is, you can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
+|``"iterate"``      |  Should contain a column name, e.g. ``"some_other_column_name"``. The JsonBuilder will iterate over each unique group in this column and generate one value for each group. To iterate over all rows, the keyword ``"index"`` may be used, or any column that only contains unique elements.|
+|``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>You can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
 
 <br>
 
@@ -124,7 +124,7 @@ mapping = \
   ]
 }
 ```
-### Which would generate a JSON with this shape:
+### Which would generate the following output:
 ```python
 {
   "fixings":[
