@@ -25,18 +25,10 @@ class JsonNode:
         self._filter()
         self._build()
         self._transmute()
-        self._validate()
         return self
 
     def _build(self):
         #This is implemented in the subclasses JsonArray, JsonObject, JsonPrimitive
-        pass
-
-    def _validate(self):
-        """
-        This is currently not used, but could be useful if one wants to implement 
-        different validators for different Node types
-        """
         pass
 
     def _filter(self):
@@ -62,11 +54,11 @@ class JsonNode:
                 self.row = next(self.df.itertuples())
                 yield   
         elif self.iterate:
-            iterator = self.df.itertuples()
+            rows = self.df.itertuples()
             self.df = None
-            for row in iterator:
+            for row in rows:
                 self.row = row
-                yield   
+                yield
         else:
             yield
 
@@ -91,7 +83,6 @@ class JsonNode:
                 self.df[out.name] = out
             print(self.df)
         return self
-
 
 class JsonArray(JsonNode):
     def __init__(self, **kwargs):
