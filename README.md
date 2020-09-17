@@ -87,7 +87,7 @@ The mapping is in itself a JSON object, specifying the shape of the desired outp
 |``"children"``      | An array of all child nodes. Any child of an ``object`` must have a name. Conversely, the children of an ``array`` have no names, and any provided name will be ignored. ``primitive`` nodes have no children.|
 |``"filter"``        | Applies a filter to the DataFrame by checking for truth values, for example: <br>``"currency1 == 'EUR' and currency2 == 'SEK'"``. <br>See [df.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) for more informaiton.|
 |``"group_by"``      |  Should contain a column name, e.g. ``"some_other_column_name"``. The JsonBuilder will iterate over each unique group in this column and generate one value for each group.|
-|``"iterate"``      |  Similar to ``"group_by`` but it is much faster. This is a bool, and if set to ``true`` the JsonBuilder will build one value for each *row*. While doing so the JsonBuilder drops the DataFrame from memory, so it's not possible to use ``filter``, ``group_by``, or ``iterate`` on any descendant node.|
+|``"iterate"``      |  Similar to ``group_by`` but it is much faster. This is a bool, and if set to ``true`` the JsonBuilder will build one value for each *row*. While doing so the JsonBuilder drops the DataFrame from memory, so it's not possible to use ``filter``, ``group_by``, or ``iterate`` on any descendant node.|
 |``"transmute"``          | Allows the user to provide an arbitrary expression with ``x``, ``r``, and ``df`` as the variables at their disposal. The evaluated expression is assigned directly to the output value, for example: <br><br>``"x if r['date']>"2020-04-03" else 0"``<br><br>You can read more about the behavior [here](#Transmutes). It is normally a good idea to avoid complex transmutes and instead prepare the data as needed in the [transforms](#Transforms).|
 
 <br>
@@ -185,7 +185,7 @@ transforms = [
   # Creates a new column called 'currency_pair'
   "(df['currency1'] + df['currency2']).rename('currency_pair')",
 
-  # Fills all NaN in the DataFrame with 0
+  # Replaces all NaN-values in the DataFrame with 0
   "df.fillna(0)",
 
   # User defined functions can be used here as well, 
@@ -194,9 +194,9 @@ transforms = [
 ]
 ```
 
-The expression is expected to evaluate to either a Pandas Series object (i.e. a column, see first two examples above) *or* to a DataFrame (see third example above). If it evaluates to a DataFrame the evaluated expression will replace the input DataFrame, otherwise the generated column is simply attached to the DataFrame.
+The expression is expected to evaluate to either a Pandas Series object (i.e. a column, see first two examples above) *or* to a DataFrame (see third example above). If it evaluates to a DataFrame it will replace the input DataFrame, otherwise the generated column is simply attached to the DataFrame.
 
-If only one column is used in the transform then the output Series will have the same name as the input column, which means the corresponding column in the DataFrame will be _overwritten_ with the output Series. 
+If only one column is used in the transform then the output Series will have the same name as the input column, which means the corresponding column in the DataFrame will be _overwritten_ with the output Series.
 
 If more than one column is used, the resulting Series will have an empty name. This Series should be renamed by the user to get a sensible column header, as shown in the second transform above. 
 
