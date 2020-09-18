@@ -24,11 +24,10 @@ class JsonNode:
     def build(self):
         self._filter()
         self._build()
-        self._transmute()
         return self
 
     def _build(self):
-        #This is implemented in the subclasses JsonArray, JsonObject, JsonPrimitive
+        # This is implemented in the subclasses JsonArray, JsonObject, JsonPrimitive
         pass
 
     def _filter(self):
@@ -48,14 +47,14 @@ class JsonNode:
      
     def _iterate(self):
         if self.group_by:
-            col = self.df.eval(self.group_by)
-            for group in self.df.groupby(col, sort=False):
+            column = self.df.eval(self.group_by)
+            for group in self.df.groupby(column, sort=False):
                 self.df = group[1]
                 self.row = next(self.df.itertuples())
                 yield   
         elif self.iterate:
             rows = self.df.itertuples()
-            self.df = None
+            self.df = None # Sorry, the behavior is Ill-defined without this line
             for row in rows:
                 self.row = row
                 yield
@@ -92,9 +91,12 @@ class JsonArray(JsonNode):
         self.value = []    
         for child in self.children:
             child.df, child.row = self.df, self.row
+            child._filter()
             for _ in child._iterate():
-                c = child.build()
+                c = child._build()
                 self.value.append(c.value)
+        self._transmute()
+        return self
 
 class JsonObject(JsonNode):
     def __init__(self, **kwargs):
@@ -104,9 +106,12 @@ class JsonObject(JsonNode):
         self.value = {}
         for child in self.children:
             child.df, child.row = self.df, self.row
+            child._filter()
             for _ in child._iterate():
-                c = child.build()
+                c = child._build()
                 self.value[c.name] = c.value
+        self._transmute()
+        return self
 
 class JsonPrimitive(JsonNode):
     def __init__(self, **kwargs):
@@ -115,6 +120,8 @@ class JsonPrimitive(JsonNode):
     def _build(self):
         if self.column:
             self.value = getattr(self.row, self.column) if self.row else None
+        self._transmute()
+        return self
 
 
 def parse_mapping(mapping):
