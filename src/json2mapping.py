@@ -1,29 +1,9 @@
 import json
+import sys
 
 input1 = """
 {
     "trades": [
-        {
-            "trade_id": "com-opt-vanilla-call",
-            "instruments": [
-                {
-                    "type": "VanillaOption",
-                    "asset_1": "XAU",
-                    "asset_2": "USD",
-                    "put_call": "PUT",
-                    "long_short": "LONG",
-                    "quantity_1": 650,
-                    "strike": 1000,
-                    "exercise_date": "2020-01-01"
-                },
-                {
-                    "type": "Bullet",
-                    "currency": "EUR",
-                    "notional": 2500,
-                    "payment_date": "2020-01-01"
-                }
-            ]
-        },
         {
             "trade_id": "com-opt-vanilla-call",
             "instruments": [
@@ -49,14 +29,19 @@ input1 = """
 }
 """
 
+if len(sys.argv) > 1:
+    with open(sys.argv[1], "r") as f:
+        input1 = f.read()
+
 
 def main():
     json1 = json.loads(input1)
     mapping = analyze(json1, {})
     fmt = {"mapping":mapping}
     output = json.dumps(fmt,indent=2)
-    print(output)
-    with open("../testdata/format.json", "w") as out:
+    if sys.getsizeof(output) < 20000:
+        print(output)
+    with open("format.json", "w") as out:
         out.write(output)
 
 
@@ -90,6 +75,8 @@ def analyze_arr(node, mapping):
     return mapping
 
 def analyze_prim(node, mapping):
+    if mapping.get("name") in ["instrument_type"]:
+        mapping["value"] = node
     return mapping
 
 if __name__ == '__main__':
