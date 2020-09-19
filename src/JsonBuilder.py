@@ -54,7 +54,7 @@ class JsonNode:
                 yield   
         elif self.iterate:
             rows = self.df.itertuples()
-            self.df = None # Sorry, the behavior is Ill-defined without this line
+            self.df = None
             for row in rows:
                 self.row = row
                 yield

@@ -1,0 +1,73 @@
+{
+  "mapping": {
+    "type": "object",
+    "children": [
+      {
+        "name": "trades",
+        "type": "array",
+        "children": [
+          {
+            "type": "object",
+            "children": [
+              {
+                "name": "trade_id"
+              },
+              {
+                "name": "instruments",
+                "type": "array",
+                "children": [
+                  {
+                    "type": "object",
+                    "children": [
+                      {
+                        "name": "type"
+                      },
+                      {
+                        "name": "asset_1"
+                      },
+                      {
+                        "name": "asset_2"
+                      },
+                      {
+                        "name": "put_call"
+                      },
+                      {
+                        "name": "long_short"
+                      },
+                      {
+                        "name": "quantity_1"
+                      },
+                      {
+                        "name": "strike"
+                      },
+                      {
+                        "name": "exercise_date"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "children": [
+                      {
+                        "name": "type"
+                      },
+                      {
+                        "name": "currency"
+                      },
+                      {
+                        "name": "notional"
+                      },
+                      {
+                        "name": "payment_date"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
