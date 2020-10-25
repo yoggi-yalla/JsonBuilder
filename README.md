@@ -176,7 +176,7 @@ For simple operations it is often more convenient to write an expression directl
 <br>
 
 ## Transforms
-Transforms are used for column-wise (or table-wise) transforms of the DataFrame before the mapping. They are passed as a list of expressions in a string format:
+Transforms are used for column-wise (or table-wise) transforms of the DataFrame before building the final JSON. They are passed as a list of expressions in a string format:
 ```python
 transforms = [
   # Converts the fixings to Swedish Öre
@@ -194,7 +194,7 @@ transforms = [
 ]
 ```
 
-The expression is expected to evaluate to either a Pandas Series object (i.e. a column, see first two examples above) *or* to a DataFrame (see third example above). If it evaluates to a DataFrame it will replace the input DataFrame, otherwise the generated column is simply attached to the DataFrame.
+Here, `df` is used to access the DataFrame to be transformed. The expression is expected to evaluate to either a Pandas Series object (i.e. a column, see first two examples above) *or* to a DataFrame (see third example above). If it evaluates to a DataFrame it will replace the input DataFrame, otherwise the generated column is simply attached to the DataFrame. The expressions will be executed one at a time in the order they appear in the list. 
 
 If only one column is used in the transform then the output Series will have the same name as the input column, which means the corresponding column in the DataFrame will be _overwritten_ with the output Series.
 
@@ -233,9 +233,11 @@ Here are a few examples of how it may be used:
    # This is significantly faster than iterating over each row
 3. "transmute": "df['fixings'].tolist()" 
 
+   # Add a new key:value pair to the object being built
    # This will only work on an object node, here x is a python dict
 4. "transmute": "x['foo'] = 'bar'"
 
+   # Append a new value to the array being built
    # This will only work on an array node, here x is a python list
 5. "transmute": "x.append(5)"
 
@@ -243,4 +245,4 @@ Here are a few examples of how it may be used:
 6. "transmute": "f1(x,r,df)"
 ```
 
-Keep in mind that `x` will be of different type depending on whether the transmute is specified on a `primitive`-, `object`-, or `array` node. Whatever the transmute evaluates to will be the final value of the node. 
+Keep in mind that `x` will be of different type depending on whether the transmute is specified on a `primitive-`, `object-`, or `array` node. Whatever the transmute evaluates to will be the final value of the node. 
