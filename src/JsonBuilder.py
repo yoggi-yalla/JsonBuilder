@@ -47,8 +47,7 @@ class JsonNode:
      
     def _iterate(self):
         if self.group_by:
-            column = self.df.eval(self.group_by)
-            for group in self.df.groupby(column, sort=False):
+            for group in self.df.groupby(self.group_by, sort=False):
                 self.df = group[1]
                 self.row = next(self.df.itertuples())
                 yield   
@@ -80,6 +79,8 @@ class JsonNode:
                 self.df = out
             elif isinstance(out, pd.core.series.Series):
                 self.df[out.name] = out
+            else:
+                print("Invalid output type: {}".format(type(out)))
             print(self.df)
         return self
 

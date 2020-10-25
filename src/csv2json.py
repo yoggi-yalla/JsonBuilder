@@ -2,8 +2,8 @@ import JsonBuilder
 import argparse
 import time
 import json
-import orjson
 
+#These are only relevant for profiling
 import cProfile
 import pstats
 import os
@@ -12,12 +12,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
 parser.add_argument('-t', '--table')
 parser.add_argument('-o', '--output')
-parser.add_argument('-s', '--silent', dest='silent', action='store_true')
 args = parser.parse_args()
 
 '''
 Run the script in command line from this working dir:
-python csv2json.py -t ../testdata/test.csv -f ../test/format3.json
+python csv2json.py -t ../testdata/test.csv -f ../testdata/format3.json
 '''
 
 def main(): 
@@ -35,18 +34,18 @@ def main():
                                .build()                         \
                                .value
 
-    output_binary = orjson.dumps(output_native,
-                                 option=orjson.OPT_INDENT_2|
-                                 orjson.OPT_NON_STR_KEYS,
-                                 default=lambda x:None)
+    output_str = json.dumps(output_native, indent=2)
 
-    if not args.silent:
-        if args.output:
-            with open(args.output, 'wb') as f:
-                f.write(output_binary)
+    if args.output:
+        with open(args.output, 'w') as f:
+            f.write(output_str)
+    else:
+        if len(output_str) < 10000:
+            print(output_str)
         else:
-            print(output_binary.decode('UTF8'))
+            print("Successful, but output is too large to print.")
 
+    print("\nElapsed time:")
     print(time.process_time())
 
 if __name__ == '__main__':
