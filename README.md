@@ -17,8 +17,7 @@ fmt = {
 
 jbTree = jsonbuilder.Tree(fmt, csv)
 
-# At this stage one can access jbTree.df and jbTree.intermediate_dfs
-# This may be used in order to inspect the results of the df_transforms
+#print(jbTree.intermediate_dfs)
 
 output_native = jbTree.build().value
 output_json = json.dumps(output_native, indent=2)
@@ -59,12 +58,12 @@ There are many ways of expressing this data in JSON format:
 # Another example:
 {
   "EURSEK": {
-    "dates":[
+    "dates": [
       "2020-04-20",
       "2020-04-21",
       ...
     ],
-    "fixings":[
+    "fixings": [
       10.8623,
       10.9543,
       ...
@@ -101,24 +100,24 @@ mapping = \
   "type": "object",
   "children":[
     {
-      "type":"array",
-      "name":"fixings",
-      "children":[
+      "type": "array",
+      "name": "fixings",
+      "children": [
         {
-          "type":"object",
-          "iterate":"index",
-          "children":[
+          "type": "object",
+          "iterate": true",
+          "children": [
             {
-              "name":"fixing",
+              "name": "fixing",
               "column": "fixing"
             },
             {
-              "name":"currency_pair",
-              "transmute":"r['currency1']+r['currency2']"
+              "name": "currency_pair",
+              "transmute": "r['currency1']+r['currency2']"
             },
             {
-              "name":"fixing_date",
-              "column":"date"
+              "name": "fixing_date",
+              "column": "date"
             }
           ]
         }
@@ -130,7 +129,7 @@ mapping = \
 ### Which would generate the following output:
 ```python
 {
-  "fixings":[
+  "fixings": [
     {
       "currency_pair": "EURSEK",
       "fixing": 10.8623,
