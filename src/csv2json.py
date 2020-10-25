@@ -1,4 +1,4 @@
-import JsonBuilder
+import jsonbuilder
 import argparse
 import time
 import json
@@ -7,6 +7,7 @@ import json
 import cProfile
 import pstats
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
@@ -21,19 +22,14 @@ python csv2json.py -t ../testdata/test.csv -f ../testdata/format3.json
 
 def main(): 
     with open(args.format) as f:
-        format = json.load(f)
+        fmt = json.load(f)
 
-    functions = format.get('functions',[])
-    transforms = format.get('df_transforms', [])
-    mapping = format.get('mapping')
-
-    output_native = JsonBuilder.parse_mapping(mapping)          \
-                               .add_functions(functions)        \
-                               .load_csv(args.table)            \
-                               .apply_transforms(transforms)    \
-                               .build()                         \
-                               .value
-
+    jbTree = jsonbuilder.Tree(fmt, args.table)
+    
+    for df in jbTree.intermediate_dfs:
+        print(df)
+    
+    output_native = jbTree.build().value
     output_str = json.dumps(output_native, indent=2)
 
     if args.output:

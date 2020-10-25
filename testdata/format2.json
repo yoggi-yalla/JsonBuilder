@@ -1,11 +1,12 @@
 {
   "functions": [
-    "def f1(x,r,df): return 1/x",
     "def f2(x): return 1+4/x",
-    "def f3(x,r,df): x['hey'] = 'ho'; return x",
-    "def f4(df): return df.fillna(0)"
+    "def f3(x,r,df): x['foo'] = 'bar'; return x",
+    "def f4(col): map = {'USD_OIS':'USD_SOFR','EUR_OIS':'EUR_ESTR'}; return col.map(map)"
   ],
   "df_transforms": [
+    "df['discount_factor']*2",
+    "f4(df['name'])"
   ],
   "mapping": {
     "type": "array",
@@ -28,6 +29,7 @@
             "children": [
               {
                 "type": "object",
+                "transmute": "f3(x,r,df)",
                 "children": [
                   {
                     "type": "array",
@@ -43,6 +45,7 @@
                           },
                           {
                             "column": "discount_factor",
+                            "transmute": "f2(x)",
                             "name": "df"
                           }
                         ]

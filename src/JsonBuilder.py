@@ -1,10 +1,55 @@
-import pandas as pd
 from asteval import Interpreter
+import pandas
 
-aeval = Interpreter()
+class Tree:
+    def __init__(self, fmt, table):
+        mapping = fmt.get("mapping",{})
+        functions = fmt.get("functions",[])
+        df_transforms = fmt.get("df_transforms",[])
+        
+        self.aeval = Interpreter()
+        self.df = pandas.read_csv(table)
+        self.root = Tree.parse_mapping(self, mapping)
+        self.intermediate_dfs = []
 
-class JsonNode:
-    def __init__(self, **kwargs):
+        for func in functions:
+            self.aeval(func)
+        
+        for transform in df_transforms:
+            self.intermediate_dfs.append(self.df.copy().head(100))
+            self.apply_transform(transform)
+        self.intermediate_dfs.append(self.df.copy().head(100))
+        
+    @staticmethod
+    def parse_mapping(tree, mapping):
+        children = mapping.pop('children', [])
+        if mapping.get("type") == "object":
+            this = JsonObject(tree, **mapping)
+        elif mapping.get("type") == "array":
+            this = JsonArray(tree, **mapping)
+        else:
+            this = JsonPrimitive(tree, **mapping)
+        for c in children:
+            this.children.append(Tree.parse_mapping(tree, c))
+        return this
+    
+    def apply_transform(self, transform):
+        self.aeval.symtable['df'] = self.df
+        out = self.aeval(transform)
+        if isinstance(out, pandas.core.frame.DataFrame):
+            self.df = out
+        elif isinstance(out, pandas.core.series.Series):
+            self.df[out.name] = out
+        else:
+            raise Exception("Invalid return type from df_transform: {}, return type: {}.".format(transform, type(out)))
+
+    def build(self):
+        self.root.df = self.df
+        return self.root.build()
+
+class Node:
+    def __init__(self, tree, **kwargs):
+        self.tree = tree
         self.name = kwargs.get('name')
         self.value = kwargs.get('value')
         self.column = kwargs.get('column')
@@ -14,7 +59,7 @@ class JsonNode:
         self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
 
-        self.transexpr = aeval.parse(self.transmute) if self.transmute else None
+        self.transexpr = self.tree.aeval.parse(self.transmute) if self.transmute else None
 
         self.df = None
         self.row = None
@@ -40,10 +85,10 @@ class JsonNode:
 
     def _transmute(self):
         if self.transmute:
-            aeval.symtable['x'] = self.value
-            aeval.symtable['r'] = self.row
-            aeval.symtable['df'] = self.df
-            self.value = aeval.run(self.transexpr)
+            self.tree.aeval.symtable['x'] = self.value
+            self.tree.aeval.symtable['r'] = self.row
+            self.tree.aeval.symtable['df'] = self.df
+            self.value = self.tree.aeval.run(self.transexpr)
      
     def _iterate(self):
         if self.group_by:
@@ -60,33 +105,9 @@ class JsonNode:
         else:
             yield
 
-    def load_csv(self, csv):
-        self.df = pd.read_csv(csv)
-        self.df.index += 1
-        return self
-
-    def add_functions(self, functions):
-        for f in functions:
-            aeval(f)
-        return self
-    
-    def apply_transforms(self, df_transforms):
-        print(self.df)
-        for transform in df_transforms:
-            aeval.symtable['df'] = self.df
-            out = aeval(transform)
-            if isinstance(out, pd.core.frame.DataFrame):
-                self.df = out
-            elif isinstance(out, pd.core.series.Series):
-                self.df[out.name] = out
-            else:
-                print("Invalid output type: {}".format(type(out)))
-            print(self.df)
-        return self
-
-class JsonArray(JsonNode):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class JsonArray(Node):
+    def __init__(self, tree, **kwargs):
+        super().__init__(tree, **kwargs)
 
     def _build(self):
         self.value = []    
@@ -99,9 +120,9 @@ class JsonArray(JsonNode):
         self._transmute()
         return self
 
-class JsonObject(JsonNode):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class JsonObject(Node):
+    def __init__(self, tree, **kwargs):
+        super().__init__(tree, **kwargs)
     
     def _build(self):
         self.value = {}
@@ -114,25 +135,12 @@ class JsonObject(JsonNode):
         self._transmute()
         return self
 
-class JsonPrimitive(JsonNode):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class JsonPrimitive(Node):
+    def __init__(self, tree, **kwargs):
+        super().__init__(tree, **kwargs)
     
     def _build(self):
-        if self.column:
-            self.value = getattr(self.row, self.column) if self.row else None
+        if self.column and self.row:
+            self.value = getattr(self.row, self.column)
         self._transmute()
         return self
-
-
-def parse_mapping(mapping):
-    children = mapping.pop('children', [])
-    if mapping.get("type") == "object":
-        this = JsonObject(**mapping)
-    elif mapping.get("type") == "array":
-        this = JsonArray(**mapping)
-    else:
-        this = JsonPrimitive(**mapping)
-    for c in children:
-        this.children.append(parse_mapping(c))
-    return this    
