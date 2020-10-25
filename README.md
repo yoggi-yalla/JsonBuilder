@@ -105,7 +105,7 @@ mapping = \
       "children": [
         {
           "type": "object",
-          "iterate": true",
+          "iterate": true,
           "children": [
             {
               "name": "fixing",
