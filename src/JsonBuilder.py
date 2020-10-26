@@ -17,9 +17,10 @@ class Tree:
             self.aeval(func)
         
         for transform in df_transforms:
-            self.intermediate_dfs.append(self.df.copy().head(100))
+            self.save_intermediate_df()
             self.apply_transform(transform)
-        self.intermediate_dfs.append(self.df.copy().head(100))
+        self.save_intermediate_df()
+
         
     @staticmethod
     def parse_mapping(tree, mapping):
@@ -34,6 +35,14 @@ class Tree:
             this.children.append(Tree.parse_mapping(tree, c))
         return this
     
+    def save_intermediate_df(self):
+        if len(self.df.index) > 100:
+            head,tail = self.df.head(50).copy(), self.df.tail(50).copy()
+            intermediate_df = pandas.concat([head,tail])
+        else:
+            intermediate_df = self.df.copy()
+        self.intermediate_dfs.append(intermediate_df)
+
     def apply_transform(self, transform):
         self.aeval.symtable['df'] = self.df
         out = self.aeval(transform)

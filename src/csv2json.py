@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 '''
 Run the script in command line from this working dir:
-python csv2json.py -t ../testdata/test.csv -f ../testdata/format3.json
+python csv2json.py -t ../testdata/test.csv -f ../testdata/format2.json
 '''
 
 def main(): 
