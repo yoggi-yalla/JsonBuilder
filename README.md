@@ -4,7 +4,6 @@ jsonbuilder is a module used for converting .csv data to a structured JSON forma
 ## Example usage
 ```Python
 import jsonbuilder
-import json
 
 # Examples of all inputs can be found further down
 
