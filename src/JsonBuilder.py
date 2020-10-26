@@ -1,5 +1,6 @@
 from asteval import Interpreter
 import pandas
+import json
 
 class Tree:
     def __init__(self, fmt, table):
@@ -45,7 +46,11 @@ class Tree:
 
     def build(self):
         self.root.df = self.df
-        return self.root.build()
+        self.root.build()
+        return self
+    
+    def toJson(self, indent):
+        return json.dumps(self.root.value, indent=indent)
 
 class Node:
     def __init__(self, tree, **kwargs):

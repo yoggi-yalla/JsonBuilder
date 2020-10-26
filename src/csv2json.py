@@ -29,15 +29,14 @@ def main():
     for df in jbTree.intermediate_dfs:
         print(df)
     
-    output_native = jbTree.build().value
-    output_str = json.dumps(output_native, indent=2)
+    output_json = jbTree.build().toJson(indent=2)
 
     if args.output:
         with open(args.output, 'w') as f:
-            f.write(output_str)
+            f.write(output_json)
     else:
-        if len(output_str) < 10000:
-            print(output_str)
+        if len(output_json) < 10000:
+            print(output_json)
         else:
             print("Successful, but output is too large to print.")
 
