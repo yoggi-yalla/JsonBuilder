@@ -1,6 +1,6 @@
 from asteval import Interpreter
 import pandas
-import json
+import rapidjson
 
 class Tree:
     def __init__(self, fmt, table):
@@ -66,7 +66,7 @@ class Tree:
     
     def save_intermediate_df(self, row):
         if row and len(self.df.index) >= row:
-            intermediate_df = self.df.iloc[row]
+            intermediate_df = self.df.iloc[row-2:row+1].copy()
         elif len(self.df.index) > 40:
             head,tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head,tail])
@@ -85,7 +85,9 @@ class Tree:
         elif isinstance(out, pandas.core.series.Series):
             self.df[out.name] = out
         else:
-            raise Exception(f"\n\nInvalid return type from df_transform:\n{transform}\nWith return type: {type(out)}")
+            msg = f"\n\nInvalid return type from df_transform:\n{transform}\n"\
+                  f"With return type: {type(out)}"
+            raise Exception(msg)
 
     def build(self):
         self.root.df = self.df
@@ -99,7 +101,7 @@ class Tree:
                 return obj.date().isoformat()
             else:
                 return str(obj)
-        return json.dumps(self.root.value, indent=indent, default=json_encoder)
+        return rapidjson.dumps(self.root.value, indent=indent, default=json_encoder)
 
 class Node:
     def __init__(self, tree, **kwargs):
@@ -151,7 +153,11 @@ class Node:
             try:
                 self.value = self.tree.eval.run(self.transexpr)
             except Exception as e:
-                raise Exception(f"\n\nFailed to run transmute: {self.transmute}\nOn row: {self.row}\nWhen building: {self.name}\n{type(e).__name__}")
+                msg = f"\n\nFailed to run transmute: {self.transmute}\n"\
+                      f"On row: {self.row}\n"\
+                      f"When building: {self.name}\n"\
+                      f"{type(e).__name__}"
+                raise Exception(msg)
      
     def _iterate(self):
         if self.group_by:

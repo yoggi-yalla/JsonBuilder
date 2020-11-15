@@ -37,7 +37,6 @@
                     "children": [
                       {
                         "type": "object",
-                        "transmute": "x['hej'] = 'san'\nx",
                         "iterate": true,
                         "children": [
                           {

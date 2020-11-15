@@ -43,19 +43,11 @@ def main():
 if __name__ == '__main__':
     if run_profiler:
         import io, pstats, cProfile, tabulate
-        pr = cProfile.Profile()
-        pr.enable()
-        main()
-        pr.disable()
-        s = io.StringIO()
+        # 'print_stats()' fails to print nicely when ncalls>99999, using tabulate instead
+        pr = cProfile.Profile(); pr.run('main()'); s = io.StringIO()
         ps = pstats.Stats(pr, stream=s).sort_stats(1).print_stats(30)
-        rows = s.getvalue().split("\n")[5:-3]
-        split_rows = []
-        for row in rows:
-            split = row.split()
-            s_out = split[:5]
-            s_out.append(" ".join([x for x in split[5:]]))
-            split_rows.append(s_out)
-        print(tabulate.tabulate(split_rows))
+        rows = [x.split(maxsplit=5) for x in s.getvalue().split("\n")]
+        print('\nProfiler Results:\n')
+        print(tabulate.tabulate(rows[5:-3], headers='firstrow'))
     else:
         main()
