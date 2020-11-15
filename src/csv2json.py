@@ -20,7 +20,8 @@ Run the script in command line from this working dir:
 python csv2json.py -t ../testdata/test.csv -f ../testdata/format2.json
 '''
 
-def main(): 
+def main():
+
     with open(args.format) as f:
         fmt = json.load(f)
 

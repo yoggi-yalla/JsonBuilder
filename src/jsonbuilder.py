@@ -7,21 +7,50 @@ class Tree:
         mapping = fmt.get("mapping",{})
         functions = fmt.get("functions",[])
         df_transforms = fmt.get("df_transforms",[])
+        separator = fmt.get("separator")
+        sheet_name = fmt.get("sheet_name", 0)
+        inspect_row = fmt.get("inspect_row")
         
-        self.aeval = Interpreter()
-        self.df = pandas.read_csv(table)
+        self.eval = Interpreter()
+        self.df = Tree.load_table(table, separator, sheet_name)
         self.root = Tree.parse_mapping(self, mapping)
+        
         self.intermediate_dfs = []
 
         for func in functions:
-            self.aeval(func)
+            try:
+                self.eval(func)
+            except:
+                raise Exception(f"\n\nFailed to load function:\n{func}")
         
         for transform in df_transforms:
-            self.save_intermediate_df()
+            self.save_intermediate_df(inspect_row)
             self.apply_transform(transform)
-        self.save_intermediate_df()
+        self.save_intermediate_df(inspect_row)
 
-        
+    @staticmethod
+    def load_table(table, separator, sheet_name):
+        try:
+            sep = separator or Tree.sniff_for_sep(table)
+            df = pandas.read_csv(table,sep=sep)
+        except:
+            df = pandas.read_excel(table,sheet_name=sheet_name)
+        df.index += 1
+        return df
+
+    @staticmethod
+    def sniff_for_sep(csvfile):
+        separators = [",",";","\t","|"]
+        with open(csvfile, 'r') as f:
+            sniffstring = f.read(10000)
+            max_count = -1
+            for s in separators:
+                n = sniffstring.count(s)
+                if n > max_count:
+                    max_count = n
+                    guess = s
+        return guess
+
     @staticmethod
     def parse_mapping(tree, mapping):
         children = mapping.pop('children', [])
@@ -35,31 +64,42 @@ class Tree:
             this.children.append(Tree.parse_mapping(tree, c))
         return this
     
-    def save_intermediate_df(self):
-        if len(self.df.index) > 100:
-            head,tail = self.df.head(50).copy(), self.df.tail(50).copy()
+    def save_intermediate_df(self, row):
+        if row and len(self.df.index) >= row:
+            intermediate_df = self.df.iloc[row]
+        elif len(self.df.index) > 40:
+            head,tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head,tail])
         else:
             intermediate_df = self.df.copy()
         self.intermediate_dfs.append(intermediate_df)
 
     def apply_transform(self, transform):
-        self.aeval.symtable['df'] = self.df
-        out = self.aeval(transform)
+        self.eval.symtable['df'] = self.df
+        try:
+            out = self.eval(transform)
+        except:
+            raise Exception(f"\n\nFailed to apply df_transform:\n{transform}")
         if isinstance(out, pandas.core.frame.DataFrame):
             self.df = out
         elif isinstance(out, pandas.core.series.Series):
             self.df[out.name] = out
         else:
-            raise Exception("Invalid return type from df_transform: {}, return type: {}.".format(transform, type(out)))
+            raise Exception(f"\n\nInvalid return type from df_transform:\n{transform}\nWith return type: {type(out)}")
 
     def build(self):
         self.root.df = self.df
+        self.root.row = next(self.root.df.itertuples())
         self.root.build()
         return self
     
     def toJson(self, indent):
-        return json.dumps(self.root.value, indent=indent)
+        def json_encoder(obj):
+            if isinstance(obj, pandas.Timestamp):
+                return obj.date().isoformat()
+            else:
+                return str(obj)
+        return json.dumps(self.root.value, indent=indent, default=json_encoder)
 
 class Node:
     def __init__(self, tree, **kwargs):
@@ -73,7 +113,10 @@ class Node:
         self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
 
-        self.transexpr = self.tree.aeval.parse(self.transmute) if self.transmute else None
+        try:
+            self.transexpr = self.tree.eval.parse(self.transmute) if self.transmute else None
+        except:
+            raise Exception(f"\n\nFailed to parse transmute:\n{self.transmute}")
 
         self.df = None
         self.row = None
@@ -91,7 +134,10 @@ class Node:
 
     def _filter(self):
         if self.filter:
-            self.df = self.df.query(self.filter)
+            try:
+                self.df = self.df.query(self.filter)
+            except:
+                raise Exception(f"\n\nFailed to apply filter:\n{self.filter}")
             if len(self.df.index)>0:
                 self.row = next(self.df.itertuples())
             else:
@@ -99,14 +145,21 @@ class Node:
 
     def _transmute(self):
         if self.transmute:
-            self.tree.aeval.symtable['x'] = self.value
-            self.tree.aeval.symtable['r'] = self.row
-            self.tree.aeval.symtable['df'] = self.df
-            self.value = self.tree.aeval.run(self.transexpr)
+            self.tree.eval.symtable['x'] = self.value
+            self.tree.eval.symtable['r'] = self.row
+            self.tree.eval.symtable['df'] = self.df
+            try:
+                self.value = self.tree.eval.run(self.transexpr)
+            except Exception as e:
+                raise Exception(f"\n\nFailed to run transmute: {self.transmute}\nOn row: {self.row}\nWhen building: {self.name}\n{type(e).__name__}")
      
     def _iterate(self):
         if self.group_by:
-            for group in self.df.groupby(self.group_by, sort=False):
+            try:
+                groups = self.df.groupby(self.group_by, sort=False)
+            except:
+                raise Exception(f"\n\nFailed to group_by: '{self.group_by}'")
+            for group in groups:
                 self.df = group[1]
                 self.row = next(self.df.itertuples())
                 yield   
