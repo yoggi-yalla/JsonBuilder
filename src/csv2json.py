@@ -3,11 +3,7 @@ import argparse
 import time
 import json
 
-#These are only relevant for profiling
-import cProfile
-import pstats
-import os
-import sys
+run_profiler = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--format')
@@ -45,7 +41,21 @@ def main():
     print(time.process_time())
 
 if __name__ == '__main__':
-    main()
-    #cProfile.run('main()', 'tmp')
-    #pstats.Stats('tmp').sort_stats('time').print_stats(20)
-    #os.remove('tmp')
+    if run_profiler:
+        import io, pstats, cProfile, tabulate
+        pr = cProfile.Profile()
+        pr.enable()
+        main()
+        pr.disable()
+        s = io.StringIO()
+        ps = pstats.Stats(pr, stream=s).sort_stats(1).print_stats(30)
+        rows = s.getvalue().split("\n")[5:-3]
+        split_rows = []
+        for row in rows:
+            split = row.split()
+            s_out = split[:5]
+            s_out.append(" ".join([x for x in split[5:]]))
+            split_rows.append(s_out)
+        print(tabulate.tabulate(split_rows))
+    else:
+        main()
