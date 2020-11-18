@@ -2,55 +2,50 @@ from asteval import Interpreter
 import pandas
 import rapidjson
 import logging
-
-# Flip this to 1 for a massive performance boost
-# Only ever use this when 'fmt' comes from a trusted source
-# No attempts have been made to sanitize input or similar
 native_eval = 0
 
-
 class Tree:
-    def __init__(self, fmt, table, date):
+    def __init__(self, fmt, table, date=None, inspect_row=None, use_native_eval=False):
         logging.info("Initializing Tree")
         mapping = fmt.get("mapping", {})
         functions = fmt.get("functions", [])
         df_transforms = fmt.get("df_transforms", [])
         separator = fmt.get("separator")
         sheet_name = fmt.get("sheet_name", 0)
-        inspect_row = fmt.get("inspect_row")
 
-        if native_eval:
-            global today
+        if use_native_eval:
+            # Only use this when 'fmt' comes from a trusted source
+            # No attempts have been made to sanitize input or similar
+            global native_eval, today
+            native_eval = 1
             today = pandas.Timestamp(date)
 
         self.eval = Interpreter()
-        self.eval.symtable['today'] = pandas.Timestamp(date)
-        self.load_functions(functions)
+        self.root = Tree.parse_mapping(self, mapping, 1)
         self.df = Tree.load_table(table, separator, sheet_name)
         self.intermediate_dfs = []
+
+        self.load_functions(functions)
+        self.eval.symtable['today'] = pandas.Timestamp(date)
         self.transform_table(df_transforms, inspect_row)
-        logging.info("Parsing mapping")
-        self.root = Tree.parse_mapping(self, mapping)
 
-    def load_functions(self, functions):
-        logging.info("Loading functions")
-        if native_eval:
-            for func in functions:
-                exec(func, globals())
+    @staticmethod
+    def parse_mapping(tree, mapping, first):
+        logging.info("Parsing mapping") if first else None
+        children = mapping.pop('children', [])
+        t = mapping.get("type")
+        if t == "object":
+            this = JsonObject(tree, **mapping)
+        elif t == "array":
+            this = JsonArray(tree, **mapping)
+        elif t in ["primitive", None]:
+            this = JsonPrimitive(tree, **mapping)
         else:
-            for func in functions:
-                try:
-                    self.eval(func, show_errors=False)
-                except Exception:
-                    logging.error("Failed to load functions")
-                    raise
-
-    def transform_table(self, df_transforms, inspect_row):
-        logging.info("Transforming table")
-        for transform in df_transforms:
-            self.save_intermediate_df(inspect_row)
-            self.apply_transform(transform)
-        self.save_intermediate_df(inspect_row)
+            logging.error(f"Invalid node type: '{t}''")
+            raise Exception(f"Invalid node type: '{t}''")
+        for c in children:
+            this.children.append(Tree.parse_mapping(tree, c, 0))
+        return this
 
     @staticmethod
     def load_table(table, separator, sheet_name):
@@ -58,7 +53,7 @@ class Tree:
         try:
             if not separator:
                 candidates = [",", ";", "\t", "|"]
-                with open(table, 'r') as f:
+                with open(table, 'r', encoding='utf-8') as f:
                     sniffstring = f.read(10000)
                     max_count = -1
                     for s in candidates:
@@ -77,26 +72,31 @@ class Tree:
         df.index += 1
         return df
 
-    @staticmethod
-    def parse_mapping(tree, mapping):
-        children = mapping.pop('children', [])
-        t = mapping.get("type")
-        if t == "object":
-            this = JsonObject(tree, **mapping)
-        elif t == "array":
-            this = JsonArray(tree, **mapping)
-        elif t in ["primitive", None]:
-            this = JsonPrimitive(tree, **mapping)
+    def load_functions(self, functions):
+        logging.info("Loading functions")
+        if native_eval:
+            for func in functions:
+                exec(func, globals())
         else:
-            logging.error(f"Invalid node type: '{t}''")
-            raise Exception(f"Invalid node type: '{t}''")
-        for c in children:
-            this.children.append(Tree.parse_mapping(tree, c))
-        return this
+            for func in functions:
+                try:
+                    self.eval(func, show_errors=False)
+                except Exception:
+                    logging.error("Failed to load functions")
+                    raise
+        return self
 
-    def save_intermediate_df(self, row):
-        if row and len(self.df.index) >= row:
-            intermediate_df = self.df.iloc[row-2:row+1].copy()
+    def transform_table(self, df_transforms, inspect_row):
+        logging.info("Transforming table")
+        for transform in df_transforms:
+            self._save_intermediate_df(inspect_row)
+            self._apply_transform(transform)
+        self._save_intermediate_df(inspect_row)
+        return self
+
+    def _save_intermediate_df(self, inspect_row):
+        if inspect_row and 1 < inspect_row < len(self.df.index):
+            intermediate_df = self.df.iloc[inspect_row-2:inspect_row+1].copy()
         elif len(self.df.index) > 40:
             head, tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head, tail])
@@ -104,15 +104,17 @@ class Tree:
             intermediate_df = self.df.copy()
         self.intermediate_dfs.append(intermediate_df)
 
-    def apply_transform(self, transform):
+    def _apply_transform(self, transform):
         if native_eval:
             f = eval("lambda df:" + transform)
             out = f(self.df)
         else:
             self.eval.symtable['df'] = self.df
-            out = self.eval(transform)
+            parsed_transform = self.eval.parse(transform)
+            out = self.eval.run(parsed_transform, with_raise=False)
             if self.eval.error:
-                raise Exception(self.eval.error_msg)
+                logging.error(f"Failed to apply transform: {transform}")
+                raise Exception(self.eval.error[0].msg)
         if isinstance(out, pandas.core.frame.DataFrame):
             self.df = out
         elif isinstance(out, pandas.core.series.Series):
@@ -272,7 +274,7 @@ class JsonPrimitive(Node):
                 self.value = getattr(self.row, self.column)
             except Exception:
                 logging.error(
-                    f"Failed to fetch data from column: '{self.column}'")
+                    f"Failed to fetch data from column '{self.column}' while building '{self.name}'")
                 raise
         self._transmute()
         return self
