@@ -147,27 +147,25 @@ class Node:
         self.name = kwargs.get('name')
         self.value = kwargs.get('value')
         self.column = kwargs.get('column')
-
         self.filter = kwargs.get('filter')
         self.group_by = kwargs.get('group_by')
         self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
-
-        if native_eval:
-            self.transexpr = eval(
-                "lambda x,r,df: (" + self.transmute + ",)[-1]") if self.transmute else None
-        else:
-            self.transexpr = self.tree.eval.parse(
-                self.transmute) if self.transmute else None
-            if self.tree.eval.error:
-                logging.error(
-                    f"Unexpected error while loading transmute: {self.transmute}")
-                raise Exception(self.tree.eval.error_msg)
-
+        self.transexpr = None
         self.df = None
         self.row = None
-
         self.children = []
+
+        if self.transmute:
+            if native_eval:
+                self.transexpr = eval(
+                    "lambda x,r,df:("+self.transmute+",)[-1]")
+            else:
+                self.transexpr = self.tree.eval.parse(self.transmute)
+                if self.tree.eval.error:
+                    logging.error(
+                        f"Unexpected error while loading transmute: {self.transmute}")
+                    raise Exception(self.tree.eval.error_msg)
 
     def build(self):
         self._filter()
@@ -273,7 +271,8 @@ class JsonPrimitive(Node):
             try:
                 self.value = getattr(self.row, self.column)
             except Exception:
-                logging.error(f"Failed to fetch data from column: '{self.column}'")
+                logging.error(
+                    f"Failed to fetch data from column: '{self.column}'")
                 raise
         self._transmute()
         return self
