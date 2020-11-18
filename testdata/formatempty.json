@@ -1,1 +1,8 @@
-{"mapping":{}}
+{
+  "functions": [
+    "def f(df): return df['discount_factor'].tolist()"
+  ],
+  "mapping": {
+    "transmute": "f(df)"
+  }
+}

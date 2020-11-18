@@ -1,28 +1,52 @@
 from asteval import Interpreter
 import pandas
 import rapidjson
+import logging
+
+# Flip this to 1 for a massive performance boost
+# Only ever use this when 'fmt' comes from a trusted source
+# No attempts have been made to sanitize input or similar
+native_eval = 0
+
 
 class Tree:
-    def __init__(self, fmt, table):
-        mapping = fmt.get("mapping",{})
-        functions = fmt.get("functions",[])
-        df_transforms = fmt.get("df_transforms",[])
+    def __init__(self, fmt, table, date):
+        logging.info("Initializing Tree")
+        mapping = fmt.get("mapping", {})
+        functions = fmt.get("functions", [])
+        df_transforms = fmt.get("df_transforms", [])
         separator = fmt.get("separator")
         sheet_name = fmt.get("sheet_name", 0)
         inspect_row = fmt.get("inspect_row")
-        
-        self.eval = Interpreter()
-        self.df = Tree.load_table(table, separator, sheet_name)
-        self.root = Tree.parse_mapping(self, mapping)
-        
-        self.intermediate_dfs = []
 
-        for func in functions:
-            try:
-                self.eval(func)
-            except:
-                raise Exception(f"\n\nFailed to load function:\n{func}")
-        
+        if native_eval:
+            global today
+            today = pandas.Timestamp(date)
+
+        self.eval = Interpreter()
+        self.eval.symtable['today'] = pandas.Timestamp(date)
+        self.load_functions(functions)
+        self.df = Tree.load_table(table, separator, sheet_name)
+        self.intermediate_dfs = []
+        self.transform_table(df_transforms, inspect_row)
+        logging.info("Parsing mapping")
+        self.root = Tree.parse_mapping(self, mapping)
+
+    def load_functions(self, functions):
+        logging.info("Loading functions")
+        if native_eval:
+            for func in functions:
+                exec(func, globals())
+        else:
+            for func in functions:
+                try:
+                    self.eval(func, show_errors=False)
+                except Exception:
+                    logging.error("Failed to load functions")
+                    raise
+
+    def transform_table(self, df_transforms, inspect_row):
+        logging.info("Transforming table")
         for transform in df_transforms:
             self.save_intermediate_df(inspect_row)
             self.apply_transform(transform)
@@ -30,78 +54,92 @@ class Tree:
 
     @staticmethod
     def load_table(table, separator, sheet_name):
+        logging.info("Loading table")
         try:
-            sep = separator or Tree.sniff_for_sep(table)
-            df = pandas.read_csv(table,sep=sep)
-        except:
-            df = pandas.read_excel(table,sheet_name=sheet_name)
+            if not separator:
+                candidates = [",", ";", "\t", "|"]
+                with open(table, 'r') as f:
+                    sniffstring = f.read(10000)
+                    max_count = -1
+                    for s in candidates:
+                        n = sniffstring.count(s)
+                        if n > max_count:
+                            max_count = n
+                            guess = s
+                separator = guess
+            df = pandas.read_csv(table, sep=separator)
+        except Exception:
+            try:
+                df = pandas.read_excel(table, sheet_name=sheet_name)
+            except Exception:
+                logging.error("Failed to load table")
+                raise
         df.index += 1
         return df
 
     @staticmethod
-    def sniff_for_sep(csvfile):
-        separators = [",",";","\t","|"]
-        with open(csvfile, 'r') as f:
-            sniffstring = f.read(10000)
-            max_count = -1
-            for s in separators:
-                n = sniffstring.count(s)
-                if n > max_count:
-                    max_count = n
-                    guess = s
-        return guess
-
-    @staticmethod
     def parse_mapping(tree, mapping):
         children = mapping.pop('children', [])
-        if mapping.get("type") == "object":
+        t = mapping.get("type")
+        if t == "object":
             this = JsonObject(tree, **mapping)
-        elif mapping.get("type") == "array":
+        elif t == "array":
             this = JsonArray(tree, **mapping)
-        else:
+        elif t in ["primitive", None]:
             this = JsonPrimitive(tree, **mapping)
+        else:
+            logging.error(f"Invalid node type: '{t}''")
+            raise Exception(f"Invalid node type: '{t}''")
         for c in children:
             this.children.append(Tree.parse_mapping(tree, c))
         return this
-    
+
     def save_intermediate_df(self, row):
         if row and len(self.df.index) >= row:
             intermediate_df = self.df.iloc[row-2:row+1].copy()
         elif len(self.df.index) > 40:
-            head,tail = self.df.head(20).copy(), self.df.tail(20).copy()
-            intermediate_df = pandas.concat([head,tail])
+            head, tail = self.df.head(20).copy(), self.df.tail(20).copy()
+            intermediate_df = pandas.concat([head, tail])
         else:
             intermediate_df = self.df.copy()
         self.intermediate_dfs.append(intermediate_df)
 
     def apply_transform(self, transform):
-        self.eval.symtable['df'] = self.df
-        try:
+        if native_eval:
+            f = eval("lambda df:" + transform)
+            out = f(self.df)
+        else:
+            self.eval.symtable['df'] = self.df
             out = self.eval(transform)
-        except:
-            raise Exception(f"\n\nFailed to apply df_transform:\n{transform}")
+            if self.eval.error:
+                raise Exception(self.eval.error_msg)
         if isinstance(out, pandas.core.frame.DataFrame):
             self.df = out
         elif isinstance(out, pandas.core.series.Series):
             self.df[out.name] = out
         else:
-            msg = f"\n\nInvalid return type from df_transform:\n{transform}\n"\
-                  f"With return type: {type(out)}"
+            logging.error("Unexpected error while pre-processing DataFrame")
+            msg = f"\n\nInvalid return type from df_transform: {transform}\n"\
+                  f"With return type: {type(out)}\n"\
+                  f"Should be one of: 'pandas.core.series.Series' (column) or 'pandas.core.frame.DataFrame' (table)"
             raise Exception(msg)
 
     def build(self):
+        logging.info("Building Tree")
         self.root.df = self.df
         self.root.row = next(self.root.df.itertuples())
         self.root.build()
         return self
-    
+
     def toJson(self, indent):
         def json_encoder(obj):
             if isinstance(obj, pandas.Timestamp):
                 return obj.date().isoformat()
             else:
                 return str(obj)
+        logging.info("Dumping Tree to JSON")
         return rapidjson.dumps(self.root.value, indent=indent, default=json_encoder)
+
 
 class Node:
     def __init__(self, tree, **kwargs):
@@ -115,10 +153,16 @@ class Node:
         self.iterate = kwargs.get('iterate')
         self.transmute = kwargs.get('transmute')
 
-        try:
-            self.transexpr = self.tree.eval.parse(self.transmute) if self.transmute else None
-        except:
-            raise Exception(f"\n\nFailed to parse transmute:\n{self.transmute}")
+        if native_eval:
+            self.transexpr = eval(
+                "lambda x,r,df: (" + self.transmute + ",)[-1]") if self.transmute else None
+        else:
+            self.transexpr = self.tree.eval.parse(
+                self.transmute) if self.transmute else None
+            if self.tree.eval.error:
+                logging.error(
+                    f"Unexpected error while loading transmute: {self.transmute}")
+                raise Exception(self.tree.eval.error_msg)
 
         self.df = None
         self.row = None
@@ -137,38 +181,47 @@ class Node:
     def _filter(self):
         if self.filter:
             try:
-                self.df = self.df.query(self.filter)
-            except:
-                raise Exception(f"\n\nFailed to apply filter:\n{self.filter}")
-            if len(self.df.index)>0:
+                ld = {'today': self.tree.eval.symtable['today']}
+                self.df = self.df.query(self.filter, local_dict=ld)
+            except Exception:
+                logging.error(f"Failed to apply filter: {self.filter}")
+                raise
+            if len(self.df.index) > 0:
                 self.row = next(self.df.itertuples())
             else:
                 self.row = None
 
     def _transmute(self):
         if self.transmute:
-            self.tree.eval.symtable['x'] = self.value
-            self.tree.eval.symtable['r'] = self.row
-            self.tree.eval.symtable['df'] = self.df
-            try:
-                self.value = self.tree.eval.run(self.transexpr)
-            except Exception as e:
-                msg = f"\n\nFailed to run transmute: {self.transmute}\n"\
-                      f"On row: {self.row}\n"\
-                      f"When building: {self.name}\n"\
-                      f"{type(e).__name__}"
-                raise Exception(msg)
-     
+            if native_eval:
+                try:
+                    self.value = self.transexpr(self.value, self.row, self.df)
+                except Exception:
+                    logging.error(
+                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}")
+                    raise
+            else:
+                self.tree.eval.symtable['x'] = self.value
+                self.tree.eval.symtable['r'] = self.row
+                self.tree.eval.symtable['df'] = self.df
+                self.value = self.tree.eval.run(
+                    self.transexpr, with_raise=False)
+                if self.tree.eval.error:
+                    logging.error(
+                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}")
+                    raise Exception(self.tree.eval.error[0].msg)
+
     def _iterate(self):
         if self.group_by:
             try:
                 groups = self.df.groupby(self.group_by, sort=False)
-            except:
-                raise Exception(f"\n\nFailed to group_by: '{self.group_by}'")
+            except Exception:
+                logging.error(f"Failed to group_by: '{self.group_by}'")
+                raise
             for group in groups:
                 self.df = group[1]
                 self.row = next(self.df.itertuples())
-                yield   
+                yield
         elif self.iterate:
             rows = self.df.itertuples()
             self.df = None
@@ -178,12 +231,13 @@ class Node:
         else:
             yield
 
+
 class JsonArray(Node):
     def __init__(self, tree, **kwargs):
         super().__init__(tree, **kwargs)
 
     def _build(self):
-        self.value = []    
+        self.value = []
         for child in self.children:
             child.df, child.row = self.df, self.row
             child._filter()
@@ -193,10 +247,11 @@ class JsonArray(Node):
         self._transmute()
         return self
 
+
 class JsonObject(Node):
     def __init__(self, tree, **kwargs):
         super().__init__(tree, **kwargs)
-    
+
     def _build(self):
         self.value = {}
         for child in self.children:
@@ -208,12 +263,17 @@ class JsonObject(Node):
         self._transmute()
         return self
 
+
 class JsonPrimitive(Node):
     def __init__(self, tree, **kwargs):
         super().__init__(tree, **kwargs)
-    
+
     def _build(self):
         if self.column and self.row:
-            self.value = getattr(self.row, self.column)
+            try:
+                self.value = getattr(self.row, self.column)
+            except Exception:
+                logging.error(f"Failed to fetch data from column: '{self.column}'")
+                raise
         self._transmute()
         return self

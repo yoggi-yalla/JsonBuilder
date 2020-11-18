@@ -45,7 +45,7 @@
                           },
                           {
                             "column": "discount_factor",
-                            "transmute": "f2(x)",
+                            "transmute": "x*2",
                             "name": "df"
                           }
                         ]
