@@ -14,6 +14,7 @@ parser.add_argument('-d', '--date')
 parser.add_argument('-i', '--inspect_row', type=int)
 parser.add_argument('-n', '--native_eval', action='store_true')
 parser.add_argument('-p', '--profiler', action='store_true')
+parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
 '''
@@ -41,18 +42,22 @@ def main():
                               inspect_row=args.inspect_row,
                               use_native_eval=args.native_eval)
 
-    for df in jbTree.intermediate_dfs:
-        print("\n\n", df)
+    if args.verbose:
+        for df in jbTree.intermediate_dfs:
+            print("\n\n", df)
 
     output_json = jbTree.build().toJson(indent=2)
 
     if args.output:
         with open(args.output, 'w') as f:
             f.write(output_json)
-    else:
-        if len(output_json) < 10000:
-            print(output_json)
 
+    if args.verbose:
+        if len(output_json)>100000:
+            print("Output JSON is too large to print...")
+        else:
+            print(output_json)
+        
     logging.info("Process completed")
     logging.info("Elapsed time: " + str(time.process_time()) + " seconds")
 
