@@ -4,6 +4,7 @@ import rapidjson
 import logging
 native_eval = 0
 
+
 class Tree:
     def __init__(self, fmt, table, date=None, inspect_row=None, use_native_eval=False):
         logging.info("Initializing Tree")
@@ -26,13 +27,13 @@ class Tree:
         self.intermediate_dfs = []
 
         self.load_functions(functions)
-        self.eval.symtable['today'] = pandas.Timestamp(date)
+        self.eval.symtable["today"] = pandas.Timestamp(date)
         self.transform_table(df_transforms, inspect_row)
 
     @staticmethod
     def parse_mapping(tree, mapping, first):
         logging.info("Parsing mapping") if first else None
-        children = mapping.pop('children', [])
+        children = mapping.pop("children", [])
         t = mapping.get("type")
         if t == "object":
             this = JsonObject(tree, **mapping)
@@ -53,7 +54,7 @@ class Tree:
         try:
             if not separator:
                 candidates = [",", ";", "\t", "|"]
-                with open(table, 'r', encoding='utf-8') as f:
+                with open(table, "r", encoding="utf-8") as f:
                     sniffstring = f.read(10000)
                     max_count = -1
                     for s in candidates:
@@ -96,7 +97,7 @@ class Tree:
 
     def _save_intermediate_df(self, inspect_row):
         if inspect_row and 1 < inspect_row < len(self.df.index):
-            intermediate_df = self.df.iloc[inspect_row-2:inspect_row+1].copy()
+            intermediate_df = self.df.iloc[inspect_row - 2 : inspect_row + 1].copy()
         elif len(self.df.index) > 40:
             head, tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head, tail])
@@ -109,7 +110,7 @@ class Tree:
             f = eval("lambda df:" + transform)
             out = f(self.df)
         else:
-            self.eval.symtable['df'] = self.df
+            self.eval.symtable["df"] = self.df
             parsed_transform = self.eval.parse(transform)
             out = self.eval.run(parsed_transform, with_raise=False)
             if self.eval.error:
@@ -121,38 +122,40 @@ class Tree:
             self.df[out.name] = out
         else:
             logging.error("Unexpected error while pre-processing DataFrame")
-            msg = f"\n\nInvalid return type from df_transform: {transform}\n"\
-                  f"With return type: {type(out)}\n"\
-                  f"Should be one of: 'pandas.core.series.Series' (column) or 'pandas.core.frame.DataFrame' (table)"
+            msg = (
+                f"\n\nInvalid return type from df_transform: {transform}\n"
+                f"With return type: {type(out)}\n"
+                f"Should be one of: 'pandas.core.series.Series' (column) or 'pandas.core.frame.DataFrame' (table)"
+            )
             raise Exception(msg)
 
     def build(self):
         logging.info("Building Tree")
         self.root.df = self.df
-        self.root.row = next(self.root.df.itertuples())
         self.root.build()
         return self
 
-    def toJson(self, indent):
+    def toJson(self, **kwargs):
         def json_encoder(obj):
             if isinstance(obj, pandas.Timestamp):
                 return obj.date().isoformat()
             else:
                 return str(obj)
+
         logging.info("Dumping Tree to JSON")
-        return rapidjson.dumps(self.root.value, indent=indent, default=json_encoder)
+        return rapidjson.dumps(self.root.value, default=json_encoder, **kwargs)
 
 
 class Node:
     def __init__(self, tree, **kwargs):
         self.tree = tree
-        self.name = kwargs.get('name')
-        self.value = kwargs.get('value')
-        self.column = kwargs.get('column')
-        self.filter = kwargs.get('filter')
-        self.group_by = kwargs.get('group_by')
-        self.iterate = kwargs.get('iterate')
-        self.transmute = kwargs.get('transmute')
+        self.name = kwargs.get("name")
+        self.value = kwargs.get("value")
+        self.column = kwargs.get("column")
+        self.filter = kwargs.get("filter")
+        self.group_by = kwargs.get("group_by")
+        self.iterate = kwargs.get("iterate")
+        self.transmute = kwargs.get("transmute")
         self.transexpr = None
         self.df = None
         self.row = None
@@ -160,13 +163,13 @@ class Node:
 
         if self.transmute:
             if native_eval:
-                self.transexpr = eval(
-                    "lambda x,r,df:("+self.transmute+",)[-1]")
+                self.transexpr = eval("lambda x,r,df:(" + self.transmute + ",)[-1]")
             else:
                 self.transexpr = self.tree.eval.parse(self.transmute)
                 if self.tree.eval.error:
                     logging.error(
-                        f"Unexpected error while loading transmute: {self.transmute}")
+                        f"Unexpected error while loading transmute: {self.transmute}"
+                    )
                     raise Exception(self.tree.eval.error_msg)
 
     def build(self):
@@ -181,7 +184,7 @@ class Node:
     def _filter(self):
         if self.filter:
             try:
-                ld = {'today': self.tree.eval.symtable['today']}
+                ld = {"today": self.tree.eval.symtable["today"]}
                 self.df = self.df.query(self.filter, local_dict=ld)
             except Exception:
                 logging.error(f"Failed to apply filter: {self.filter}")
@@ -198,17 +201,18 @@ class Node:
                     self.value = self.transexpr(self.value, self.row, self.df)
                 except Exception:
                     logging.error(
-                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}")
+                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}"
+                    )
                     raise
             else:
-                self.tree.eval.symtable['x'] = self.value
-                self.tree.eval.symtable['r'] = self.row
-                self.tree.eval.symtable['df'] = self.df
-                self.value = self.tree.eval.run(
-                    self.transexpr, with_raise=False)
+                self.tree.eval.symtable["x"] = self.value
+                self.tree.eval.symtable["r"] = self.row
+                self.tree.eval.symtable["df"] = self.df
+                self.value = self.tree.eval.run(self.transexpr, with_raise=False)
                 if self.tree.eval.error:
                     logging.error(
-                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}")
+                        f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}"
+                    )
                     raise Exception(self.tree.eval.error[0].msg)
 
     def _iterate(self):
@@ -274,7 +278,8 @@ class JsonPrimitive(Node):
                 self.value = getattr(self.row, self.column)
             except Exception:
                 logging.error(
-                    f"Failed to fetch data from column '{self.column}' while building '{self.name}'")
+                    f"Failed to fetch data from column '{self.column}' while building '{self.name}'"
+                )
                 raise
         self._transmute()
         return self

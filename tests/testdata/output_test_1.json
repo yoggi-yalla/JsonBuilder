@@ -1,0 +1,22 @@
+[
+  {
+    "name": "USD_OIS",
+    "discount_factor": 0.99,
+    "date": "2019-05-18"
+  },
+  {
+    "name": "USD_OIS",
+    "discount_factor": 0.95,
+    "date": "2020-05-18"
+  },
+  {
+    "name": "EUR_OIS",
+    "discount_factor": 0.99,
+    "date": "2019-05-18"
+  },
+  {
+    "name": "EUR_OIS",
+    "discount_factor": 0.95,
+    "date": "2020-05-18"
+  }
+]
