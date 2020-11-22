@@ -1,9 +1,6 @@
 from asteval import Interpreter
 from dateutil.relativedelta import relativedelta
-try:
-    from util import std_funcs
-except:
-    from .util import std_funcs
+from jb.util import std_funcs
 import pandas
 import rapidjson
 import logging
@@ -174,7 +171,7 @@ class Tree:
             if isinstance(obj, pandas.Timestamp):
                 return obj.date().isoformat()
             elif isinstance(obj, datetime.date):
-                return obj.isoformat()
+                return obj.date().isoformat()
             else:
                 return str(obj)
 

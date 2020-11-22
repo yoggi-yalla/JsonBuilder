@@ -69,7 +69,7 @@
                           },
                           {
                             "name": "date",
-                            "transmute": "(date(x) + delta('10.0d2w-3.0m4y')).isoformat() if date(r.date) < date(today) else None",
+                            "transmute": "date(x) + delta('10.0d2w-3.0m4y') if date(r.date) < date(today) else None",
                             "column": "date"
                           }
                         ]

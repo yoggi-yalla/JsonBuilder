@@ -10,12 +10,7 @@ def translate(obj, t_dict):
 """,
 """
 def date(obj, **kwargs):
-    if isinstance(obj, pandas.Timestamp):
-        return obj.date()
-    elif isinstance(obj, pandas.Series):
-        return pandas.to_datetime(obj, **kwargs)
-    else:
-        return pandas.to_datetime(obj, **kwargs).date()
+    return pandas.to_datetime(obj, **kwargs)
 """,
 """
 def delta(obj):

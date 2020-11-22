@@ -1,4 +1,4 @@
-from jsonbuilder import Tree
+from jb import jsonbuilder
 import argparse
 import time
 import json
@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 """
 Run this script from command line in the project root dir:
-python scripts/table2json.py -t tests/testdata/test.csv -f tests/testdata/format2.json -v
+python main.py -t jb/testdata/test.csv -f jb/testdata/format2.json -v
 """
 
 
@@ -36,7 +36,7 @@ def main():
     with open(args.format) as f:
         fmt = json.load(f)
 
-    jbTree = Tree(
+    jbTree = jsonbuilder.Tree(
         fmt,
         args.table,
         date=args.date,
