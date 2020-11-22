@@ -1,0 +1,71 @@
+[
+  {
+    "action": "ADD_IR",
+    "base_curve": null,
+    "currency": "EUR",
+    "ir_curves": [
+      {
+        "identifier": "EUR_OIS",
+        "interpolation_method": "LogLinearDiscountFactor",
+        "curve_points": [
+          {
+            "discount_factor": NaN,
+            "date": "2023-10-25"
+          }
+        ]
+      },
+      {
+        "identifier": "EUR_ESTR",
+        "interpolation_method": "LogLinearDiscountFactor",
+        "curve_points": [
+          {
+            "discount_factor": 2.0,
+            "date": "2023-10-25"
+          },
+          {
+            "discount_factor": 1.8,
+            "date": "2023-11-25"
+          }
+        ]
+      }
+    ],
+    "foo": "bar"
+  },
+  {
+    "action": "ADD_IR",
+    "base_curve": "GBP_OIS",
+    "currency": "GBP",
+    "ir_curves": [
+      {
+        "identifier": "GBP_OIS",
+        "interpolation_method": "LogLinearDiscountFactor",
+        "curve_points": [
+          {
+            "discount_factor": 2.0,
+            "date": "2023-10-25"
+          },
+          {
+            "discount_factor": 1.8,
+            "date": "2023-11-25"
+          }
+        ]
+      },
+      {
+        "identifier": "GBP_LIBOR_3M",
+        "interpolation_method": "LogLinearDiscountFactor",
+        "curve_points": [
+          {
+            "discount_factor": 2.0,
+            "date": "2023-10-25"
+          },
+          {
+            "discount_factor": 1.8,
+            "date": "2023-11-25"
+          }
+        ]
+      }
+    ],
+    "foo": "bar"
+  },
+  1
+]

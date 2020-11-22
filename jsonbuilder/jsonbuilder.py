@@ -1,7 +1,15 @@
 from asteval import Interpreter
+from dateutil.relativedelta import relativedelta
+try:
+    from util import std_funcs
+except:
+    from .util import std_funcs
 import pandas
 import rapidjson
 import logging
+import re
+import datetime
+
 native_eval = 0
 
 
@@ -9,25 +17,33 @@ class Tree:
     def __init__(self, fmt, table, date=None, inspect_row=None, use_native_eval=False):
         logging.info("Initializing Tree")
         mapping = fmt.get("mapping", {})
+        constants = fmt.get("constants", [])
         functions = fmt.get("functions", [])
         df_transforms = fmt.get("df_transforms", [])
-        separator = fmt.get("separator")
-        sheet_name = fmt.get("sheet_name", 0)
+        table_kwargs = fmt.get("table_kwargs", {})
 
         if use_native_eval:
             # Only use this when 'fmt' comes from a trusted source
             # No attempts have been made to sanitize input or similar
             global native_eval, today
+            [exec(f, globals()) for f in std_funcs]
             native_eval = 1
-            today = pandas.Timestamp(date)
+            today = pandas.Timestamp(date).date()
 
         self.eval = Interpreter()
         self.root = Tree.parse_mapping(self, mapping, 1)
-        self.df = Tree.load_table(table, separator, sheet_name)
+        self.df = Tree.load_table(table, **table_kwargs)
         self.intermediate_dfs = []
 
+        [self.eval(f) for f in std_funcs]
+        self.eval.symtable["today"] = pandas.Timestamp(date).date()
+        self.eval.symtable["re"] = re
+        self.eval.symtable["pandas"] = pandas
+        self.eval.symtable["datetime"] = datetime
+        self.eval.symtable["relativedelta"] = relativedelta
+
+        self.load_constants(constants)
         self.load_functions(functions)
-        self.eval.symtable["today"] = pandas.Timestamp(date)
         self.transform_table(df_transforms, inspect_row)
 
     @staticmethod
@@ -49,10 +65,10 @@ class Tree:
         return this
 
     @staticmethod
-    def load_table(table, separator, sheet_name):
+    def load_table(table, **kwargs):
         logging.info("Loading table")
         try:
-            if not separator:
+            if not kwargs.get("sep"):
                 candidates = [",", ";", "\t", "|"]
                 with open(table, "r", encoding="utf-8") as f:
                     sniffstring = f.read(10000)
@@ -62,11 +78,11 @@ class Tree:
                         if n > max_count:
                             max_count = n
                             guess = s
-                separator = guess
-            df = pandas.read_csv(table, sep=separator)
+                kwargs.update({"sep": guess})
+            df = pandas.read_csv(table, **kwargs)
         except Exception:
             try:
-                df = pandas.read_excel(table, sheet_name=sheet_name)
+                df = pandas.read_excel(table, **kwargs)
             except Exception:
                 logging.error("Failed to load table")
                 raise
@@ -80,10 +96,26 @@ class Tree:
                 exec(func, globals())
         else:
             for func in functions:
+                assert func.lstrip()[:3] == "def"
                 try:
                     self.eval(func, show_errors=False)
                 except Exception:
                     logging.error("Failed to load functions")
+                    raise
+        return self
+
+    def load_constants(self, constants):
+        logging.info("Loading constants")
+        if native_eval:
+            for const in constants:
+                exec(const, globals())
+        else:
+            for const in constants:
+                assert len(const.split("=")) == 2
+                try:
+                    self.eval(const, show_errors=False)
+                except Exception:
+                    logging.error("Failed to load constants")
                     raise
         return self
 
@@ -116,16 +148,16 @@ class Tree:
             if self.eval.error:
                 logging.error(f"Failed to apply transform: {transform}")
                 raise Exception(self.eval.error[0].msg)
-        if isinstance(out, pandas.core.frame.DataFrame):
+        if isinstance(out, pandas.DataFrame):
             self.df = out
-        elif isinstance(out, pandas.core.series.Series):
+        elif isinstance(out, pandas.Series):
             self.df[out.name] = out
         else:
             logging.error("Unexpected error while pre-processing DataFrame")
             msg = (
                 f"\n\nInvalid return type from df_transform: {transform}\n"
                 f"With return type: {type(out)}\n"
-                f"Should be one of: 'pandas.core.series.Series' (column) or 'pandas.core.frame.DataFrame' (table)"
+                f"Should be one of: 'pandas.Series' (column) or 'pandas.DataFrame' (table)"
             )
             raise Exception(msg)
 
@@ -136,13 +168,16 @@ class Tree:
         return self
 
     def toJson(self, **kwargs):
+        logging.info("Dumping Tree to JSON")
+
         def json_encoder(obj):
             if isinstance(obj, pandas.Timestamp):
                 return obj.date().isoformat()
+            elif isinstance(obj, datetime.date):
+                return obj.isoformat()
             else:
                 return str(obj)
 
-        logging.info("Dumping Tree to JSON")
         return rapidjson.dumps(self.root.value, default=json_encoder, **kwargs)
 
 

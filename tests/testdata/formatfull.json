@@ -1,0 +1,87 @@
+{
+  "constants":[
+    "id_translation = {'GBP_SONIA':'GBP_OIS', 'EUR_\u20ACSTR': 'EUR_ESTR'}",
+    "base_curves = {'GBP':'GBP_OIS','USD':'USD_SOFR'}"
+  ],
+  "functions":[
+    "def f1(x,r,df): x['foo'] = 'bar'; return x",
+    "def f2(x,r,df): x.append(1); return x",
+    "def f3(df, col): df[col] = df[col].str[:1]; return df"
+  ],
+  "df_transforms":[
+    "translate(df['identifier'], id_translation)",
+    "df['discount_factor']*2",
+    "date(df['date'])",
+    "df['currency'].rename('c1')",
+    "f3(df,'c1')"
+  ],
+  "mapping": {
+    "type": "array",
+    "transmute": "f2(x,r,df)",
+    "children": [
+      {
+        "type": "object",
+        "group_by": "c1",
+        "transmute": "f1(x,r,df)",
+        "children": [
+          {
+            "name": "action",
+            "value": "ADD_IR"
+          },
+          {
+            "name": "base_curve",
+            "column": "currency",
+            "transmute": "base_curves.get(x)"
+          },
+          {
+            "name": "currency",
+            "column": "currency"
+          },
+          {
+            "type": "array",
+            "name": "ir_curves",
+            "children":[
+              {
+                "type":"object",
+                "group_by":"identifier",
+                "children":[
+                  {
+                    "name": "identifier",
+                    "column": "identifier"
+                  },
+                  {
+                    "name": "interpolation_method",
+                    "value": "LogLinearDiscountFactor"
+                  },
+                  {
+                    "type": "array",
+                    "name": "curve_points",
+                    "children": [
+                      {
+                        "type":"object",
+                        "iterate": true,
+                        "filter": "date < @today",
+                        "children":[
+                          {
+                            "name": "discount_factor",
+                            "transmute": "x*2 if date(r.date) > date(today) else x",
+                            "column": "discount_factor"
+                          },
+                          {
+                            "name": "date",
+                            "transmute": "(date(x) + delta('10.0d2w-3.0m4y')).isoformat() if date(r.date) < date(today) else None",
+                            "column": "date"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
