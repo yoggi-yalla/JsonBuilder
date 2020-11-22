@@ -93,7 +93,7 @@ class Tree:
                 exec(func, globals())
         else:
             for func in functions:
-                assert func.lstrip()[:3] == "def"
+                assert func.lstrip()[:4] == "def "
                 try:
                     self.eval(func, show_errors=False)
                 except Exception:
@@ -168,10 +168,10 @@ class Tree:
         logging.info("Dumping Tree to JSON")
 
         def json_encoder(obj):
-            if isinstance(obj, pandas.Timestamp):
+            if isinstance(obj, (pandas.Timestamp, datetime.datetime)):
                 return obj.date().isoformat()
             elif isinstance(obj, datetime.date):
-                return obj.date().isoformat()
+                return obj.isoformat()
             else:
                 return str(obj)
 
