@@ -27,7 +27,7 @@ def delta(obj):
             return relativedelta(days=units['d'], weeks=units['w'], months=units['m'], years=units['y'])
         except Exception:
             raise Exception('Invalid delta-string: {}'.format(obj))
-    elif pandas.isna(obj):
+    elif isinstance(obj, None) or pandas.isna(obj):
         return relativedelta()
     else:
         raise Exception('Invalid delta-object: {}'.format(obj))

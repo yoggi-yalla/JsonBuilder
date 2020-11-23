@@ -65,18 +65,8 @@ class Tree:
     def load_table(table, **kwargs):
         logging.info("Loading table")
         try:
-            if not kwargs.get("sep"):
-                candidates = [",", ";", "\t", "|"]
-                with open(table, "r", encoding="utf-8") as f:
-                    sniffstring = f.read(10000)
-                    max_count = -1
-                    for s in candidates:
-                        n = sniffstring.count(s)
-                        if n > max_count:
-                            max_count = n
-                            guess = s
-                kwargs.update({"sep": guess})
-            df = pandas.read_csv(table, **kwargs)
+            sep = kwargs.pop('sep', Tree.sep_guesser(table))
+            df = pandas.read_csv(table, sep=sep, **kwargs)
         except Exception:
             try:
                 df = pandas.read_excel(table, **kwargs)
@@ -86,6 +76,19 @@ class Tree:
         df.index += 1
         return df
 
+    @staticmethod
+    def sep_guesser(table):
+        candidates = [",", ";", "\t", "|"]
+        with open(table, "r", encoding="utf-8") as f:
+            sniffstring = f.read(10000)
+            max_count = -1
+            for s in candidates:
+                n = sniffstring.count(s)
+                if n > max_count:
+                    max_count = n
+                    guess = s
+        return guess
+
     def load_functions(self, functions):
         logging.info("Loading functions")
         if native_eval:
@@ -93,8 +96,8 @@ class Tree:
                 exec(func, globals())
         else:
             for func in functions:
-                assert func.lstrip()[:4] == "def "
                 try:
+                    assert func.lstrip()[:4] == "def "
                     self.eval(func, show_errors=False)
                 except Exception:
                     logging.error("Failed to load functions")
@@ -108,8 +111,8 @@ class Tree:
                 exec(const, globals())
         else:
             for const in constants:
-                assert len(const.split("=")) == 2
                 try:
+                    assert len(const.split("=")) == 2
                     self.eval(const, show_errors=False)
                 except Exception:
                     logging.error("Failed to load constants")
@@ -126,7 +129,8 @@ class Tree:
 
     def _save_intermediate_df(self, inspect_row):
         if inspect_row and 1 < inspect_row < len(self.df.index):
-            intermediate_df = self.df.iloc[inspect_row - 2 : inspect_row + 1].copy()
+            intermediate_df = self.df.iloc[inspect_row -
+                                           2: inspect_row + 1].copy()
         elif len(self.df.index) > 40:
             head, tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head, tail])
@@ -195,7 +199,8 @@ class Node:
 
         if self.transmute:
             if native_eval:
-                self.transexpr = eval("lambda x,r,df:(" + self.transmute + ",)[-1]")
+                self.transexpr = eval(
+                    "lambda x,r,df:(" + self.transmute + ",)[-1]")
             else:
                 self.transexpr = self.tree.eval.parse(self.transmute)
                 if self.tree.eval.error:
@@ -240,7 +245,8 @@ class Node:
                 self.tree.eval.symtable["x"] = self.value
                 self.tree.eval.symtable["r"] = self.row
                 self.tree.eval.symtable["df"] = self.df
-                self.value = self.tree.eval.run(self.transexpr, with_raise=False)
+                self.value = self.tree.eval.run(
+                    self.transexpr, with_raise=False)
                 if self.tree.eval.error:
                     logging.error(
                         f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}"

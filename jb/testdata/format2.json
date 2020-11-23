@@ -1,12 +1,14 @@
 {
   "functions": [
     "def f2(x): return 1+4/x",
-    "def f3(x,r,df): x['foo'] = 'bar'; return x",
-    "def f4(col): map = {'USD_OIS':'USD_SOFR','EUR_OIS':'EUR_ESTR'}; return col.map(map)"
+    "def f3(x,r,df): x['foo'] = 'bar'; return x"
+  ],
+  "constants":[
+    "curve_translation = {'USD_OIS':'USD_SOFR','EUR_OIS':'EUR_ESTR'}"
   ],
   "df_transforms": [
     "df['discount_factor']*2",
-    "f4(df['name'])"
+    "translate(df['name'], curve_translation)"
   ],
   "mapping": {
     "type": "array",
