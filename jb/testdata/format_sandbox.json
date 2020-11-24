@@ -1,79 +1,66 @@
 {
+  "functions": [
+    "def f2(x): return 1+4/x",
+    "def f3(x,r,df): x['foo'] = 'bar'; return x"
+  ],
   "constants":[
-    "id_translation = {'GBP_SONIA':'GBP_OIS', 'EUR_\u20ACSTR': 'EUR_ESTR'}",
-    "base_curves = {'GBP':'GBP_OIS','USD':'USD_SOFR'}"
+    "curve_translation = {'USD_OIS':'USD_SOFR','EUR_OIS':'EUR_ESTR'}"
   ],
-  "functions":[
-    "def f1(x,r,df): x['foo'] = 'bar'; return x",
-    "def f2(x,r,df): x.append(1); return x",
-    "def f3(df, col): df[col] = df[col].str[:1]; return df"
-  ],
-  "df_transforms":[
-    "translate(df['identifier'], id_translation)",
+  "df_transforms": [
     "df['discount_factor']*2",
-    "date(df['date'])",
-    "df['currency'].rename('c1')",
-    "f3(df,'c1')"
+    "translate(df['name'], curve_translation)"
   ],
   "mapping": {
     "type": "array",
-    "transmute": "f2(x,r,df)",
     "children": [
       {
         "type": "object",
-        "group_by": "c1",
-        "transmute": "f1(x,r,df)",
+        "group_by": "name",
         "children": [
           {
             "name": "action",
             "value": "ADD_IR"
           },
           {
-            "name": "base_curve",
-            "column": "currency",
-            "transmute": "base_curves.get(x)"
-          },
-          {
             "name": "currency",
-            "column": "currency"
+            "column": "name"
           },
           {
             "type": "array",
             "name": "ir_curves",
-            "children":[
+            "children": [
               {
-                "type":"object",
-                "group_by":"identifier",
-                "children":[
-                  {
-                    "name": "identifier",
-                    "column": "identifier"
-                  },
-                  {
-                    "name": "interpolation_method",
-                    "value": "LogLinearDiscountFactor"
-                  },
+                "type": "object",
+                "transmute": "f3(x,r,df)",
+                "children": [
                   {
                     "type": "array",
-                    "name": "curve_points",
+                    "name": "points",
                     "children": [
                       {
-                        "type":"object",
+                        "type": "object",
                         "iterate": true,
-                        "children":[
+                        "children": [
                           {
-                            "name": "discount_factor",
-                            "transmute": "x*2",
-                            "column": "discount_factor"
+                            "column": "date",
+                            "name": "date"
                           },
                           {
-                            "name": "date",
-                            "transmute": "x if x is pandas.NaT else date(x) + delta('10.0d2w-3.0m4y')",
-                            "column": "date"
+                            "column": "discount_factor",
+                            "transmute": "x*2",
+                            "name": "df"
                           }
                         ]
                       }
                     ]
+                  },
+                  {
+                    "name": "type",
+                    "value": "BASE_CURVE"
+                  },
+                  {
+                    "name": "identifier",
+                    "column": "name"
                   }
                 ]
               }

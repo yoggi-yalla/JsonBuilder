@@ -74,6 +74,10 @@ class Tree:
                 logging.error("Failed to load table")
                 raise
         df.index += 1
+        df.columns = df.columns.str.strip()
+        df.columns = df.columns.str.lower()
+        df.columns = df.columns.str.replace('-','_')
+        df.columns = df.columns.str.replace(' ', '_')
         return df
 
     @staticmethod
@@ -318,6 +322,7 @@ class JsonPrimitive(Node):
                 logging.error(
                     f"Failed to fetch data from column '{self.column}' while building '{self.name}'"
                 )
+                print(self.row)
                 raise
         self._transmute()
         return self

@@ -16,8 +16,8 @@ parser.add_argument("-v", "--verbose", action="store_true")
 args = parser.parse_args()
 
 """
-Run this script from command line in the project root dir:
-python main.py -t jb/testdata/test.csv -f jb/testdata/format2.json -v
+Run this script in command line from the project root dir:
+python main.py -t jb/testdata/test_sandbox.csv -f jb/testdata/format_sandbox.json -v
 """
 
 
