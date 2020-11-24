@@ -1,5 +1,5 @@
 # jsonbuilder
-jsonbuilder is a module used for converting .csv data to a structured JSON format. It is built on top of Pandas, and as such it requires the user to have Pandas installed on their machine.
+jsonbuilder is a module used for converting .csv data to a structured JSON format.
 
 ## Example usage
 ```Python
