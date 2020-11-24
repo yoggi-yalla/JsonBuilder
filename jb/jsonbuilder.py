@@ -322,7 +322,6 @@ class JsonPrimitive(Node):
                 logging.error(
                     f"Failed to fetch data from column '{self.column}' while building '{self.name}'"
                 )
-                print(self.row)
                 raise
         self._transmute()
         return self
