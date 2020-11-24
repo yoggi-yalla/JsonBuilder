@@ -133,8 +133,7 @@ class Tree:
 
     def _save_intermediate_df(self, inspect_row):
         if inspect_row and 1 < inspect_row < len(self.df.index):
-            intermediate_df = self.df.iloc[inspect_row -
-                                           2: inspect_row + 1].copy()
+            intermediate_df = self.df.iloc[inspect_row - 2 : inspect_row + 1].copy()
         elif len(self.df.index) > 40:
             head, tail = self.df.head(20).copy(), self.df.tail(20).copy()
             intermediate_df = pandas.concat([head, tail])
@@ -203,8 +202,7 @@ class Node:
 
         if self.transmute:
             if native_eval:
-                self.transexpr = eval(
-                    "lambda x,r,df:(" + self.transmute + ",)[-1]")
+                self.transexpr = eval("lambda x,r,df:(" + self.transmute + ",)[-1]")
             else:
                 self.transexpr = self.tree.eval.parse(self.transmute)
                 if self.tree.eval.error:
@@ -249,8 +247,7 @@ class Node:
                 self.tree.eval.symtable["x"] = self.value
                 self.tree.eval.symtable["r"] = self.row
                 self.tree.eval.symtable["df"] = self.df
-                self.value = self.tree.eval.run(
-                    self.transexpr, with_raise=False)
+                self.value = self.tree.eval.run(self.transexpr, with_raise=False)
                 if self.tree.eval.error:
                     logging.error(
                         f"Unexpected error while transmuting {self.name} on row: {getattr(self.row, 'Index')}"
