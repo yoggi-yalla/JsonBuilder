@@ -17,6 +17,7 @@ class Tree:
         constants = fmt.get("constants", [])
         functions = fmt.get("functions", [])
         df_transforms = fmt.get("df_transforms", [])
+        raw_header = fmt.get("raw_header", False)
         table_kwargs = fmt.get("table_kwargs", {})
 
         if use_native_eval:
@@ -29,7 +30,7 @@ class Tree:
 
         self.eval = Interpreter()
         self.root = Tree.parse_mapping(self, mapping, 1)
-        self.df = Tree.load_table(table, **table_kwargs)
+        self.df = Tree.load_table(table, raw_header, **table_kwargs)
         self.intermediate_dfs = []
 
         [self.eval(f) for f in std_funcs]
@@ -62,7 +63,7 @@ class Tree:
         return this
 
     @staticmethod
-    def load_table(table, **kwargs):
+    def load_table(table, raw_header, **kwargs):
         logging.info("Loading table")
         try:
             sep = kwargs.pop('sep', Tree.sep_guesser(table))
@@ -74,10 +75,11 @@ class Tree:
                 logging.error("Failed to load table")
                 raise
         df.index += 1
-        df.columns = df.columns.str.strip()
-        df.columns = df.columns.str.lower()
-        df.columns = df.columns.str.replace('-','_')
-        df.columns = df.columns.str.replace(' ', '_')
+        if not raw_header:
+            df.columns = df.columns.str.strip()
+            df.columns = df.columns.str.lower()
+            df.columns = df.columns.str.replace('-','_')
+            df.columns = df.columns.str.replace(' ', '_')
         return df
 
     @staticmethod

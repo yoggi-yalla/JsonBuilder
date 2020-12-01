@@ -2,39 +2,54 @@ import json
 import sys
 
 input1 = """
-{
-    "trades": [
-        {
-            "trade_id": "com-opt-vanilla-call",
-            "instruments": [
-                {
-                    "type": "VanillaOption",
-                    "asset_1": "XAU",
-                    "asset_2": "USD",
-                    "put_call": "PUT",
-                    "long_short": "LONG",
-                    "quantity_1": 650,
-                    "strike": 1000,
-                    "exercise_date": "2020-01-01"
-                },
-                {
-                    "type": "Bullet",
-                    "currency": "EUR",
-                    "notional": 2500,
-                    "payment_date": "2020-01-01"
-                }
-            ]
-        }
+[
+  {
+    "action": "ADD_IR",
+    "currency": "USD_SOFR",
+    "ir_curves": [
+      {
+        "points": [
+          {
+            "date": "2019-05-18",
+            "df": 3.96
+          },
+          {
+            "date": "2020-05-18",
+            "df": 3.8
+          }
+        ],
+        "type": "BASE_CURVE",
+        "identifier": "USD_SOFR",
+        "foo": "bar"
+      }
     ]
-}
+  },
+  {
+    "action": "ADD_IR",
+    "currency": "EUR_ESTR",
+    "ir_curves": [
+      {
+        "points": [
+          {
+            "date": "2019-05-18",
+            "df": 3.96
+          },
+          {
+            "date": "2020-05-18",
+            "df": 3.8
+          }
+        ],
+        "type": "BASE_CURVE",
+        "identifier": "EUR_ESTR",
+        "foo": "bar"
+      }
+    ]
+  }
+]
 """
 
-if len(sys.argv) > 1:
-    with open(sys.argv[1], "r") as f:
-        input1 = f.read()
-
-
 def main():
+
     json1 = json.loads(input1)
     mapping = analyze(json1, {})
     fmt = {"mapping":mapping}
